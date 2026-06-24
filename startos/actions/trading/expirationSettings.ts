@@ -1,14 +1,13 @@
-import { storeJson } from '../fileModels/store.json'
-import { daemon_settings } from '../fileModels/settings'
-import { i18n } from '../i18n'
-import { sdk } from '../sdk'
+import { daemon_settings } from '../../fileModels/settings'
+import { i18n } from '../../i18n'
+import { sdk } from '../../sdk'
 
 const { InputSpec, Value } = sdk
 
 export const inputSpec = InputSpec.of({
   order_days: Value.number({
-    name: 'Order Event Retention',
-    description: 'Order events (kind 38383) — trades resolve quickly',
+    name: i18n('Order Event Retention'),
+    description: i18n('Order events (kind 38383) — trades resolve quickly'),
     default: 30,
     required: true,
     integer: true,
@@ -16,8 +15,10 @@ export const inputSpec = InputSpec.of({
     max: 365,
   }),
   rating_days: Value.number({
-    name: 'Rating Event Retention',
-    description: 'Rating events (kind 38384) — reputation history retention',
+    name: i18n('Rating Event Retention'),
+    description: i18n(
+      'Rating events (kind 38384) — reputation history retention',
+    ),
     default: 90,
     required: true,
     integer: true,
@@ -25,9 +26,10 @@ export const inputSpec = InputSpec.of({
     max: 365,
   }),
   dispute_days: Value.number({
-    name: 'Dispute Event Retention',
-    description:
+    name: i18n('Dispute Event Retention'),
+    description: i18n(
       'Dispute events (kind 38386) — longer retention for auditing',
+    ),
     default: 90,
     required: true,
     integer: true,
@@ -35,8 +37,8 @@ export const inputSpec = InputSpec.of({
     max: 365,
   }),
   fee_audit_days: Value.number({
-    name: 'Fee Audit Event Retention',
-    description: 'Fee audit events (kind 8383) — annual transparency',
+    name: i18n('Fee Audit Event Retention'),
+    description: i18n('Fee audit events (kind 8383) — annual transparency'),
     default: 365,
     required: true,
     integer: true,
@@ -44,9 +46,10 @@ export const inputSpec = InputSpec.of({
     max: 1095,
   }),
   dm_days: Value.number({
-    name: 'Direct Message Retention',
-    description:
+    name: i18n('Direct Message Retention'),
+    description: i18n(
       'Protocol-v2 direct messages (kind 14) — trade lifetime plus dispute window',
+    ),
     default: 30,
     required: true,
     integer: true,
@@ -60,10 +63,12 @@ export const expirationSettings = sdk.Action.withInput(
 
   async () => ({
     name: i18n('Configure Event Expiration'),
-    description: i18n('Configure how long different Nostr event types are retained'),
+    description: i18n(
+      'Configure how long different Nostr event types are retained',
+    ),
     warning: null,
     allowedStatuses: 'any',
-    group: i18n('Mostro'),
+    group: i18n('Trading'),
     visibility: 'enabled',
   }),
 
@@ -84,11 +89,6 @@ export const expirationSettings = sdk.Action.withInput(
   },
 
   async ({ effects, input }) => {
-    const configured = await storeJson.read((s) => s?.nostrKeysConfigured).once()
-    if (configured === null) {
-      await storeJson.merge(effects, { nostrKeysConfigured: false })
-    }
-
     await daemon_settings.merge(effects, {
       expiration: {
         order_days: input.order_days,

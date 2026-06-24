@@ -4,7 +4,7 @@ import { setInterfaces } from '../interfaces'
 import { versionGraph } from '../versions'
 import { actions } from '../actions'
 import { restoreInit } from '../backups'
-import { setupNostr } from '../actions/nostrSetup'
+import { requireNostrConfig } from './requireNostrConfig'
 import { seedDefaults } from './seedDefaults'
 
 export const init = sdk.setupInit(
@@ -14,7 +14,7 @@ export const init = sdk.setupInit(
   setDependencies,
   actions,
   seedDefaults,
-  setupNostr,
+  requireNostrConfig,
 )
 
 export const uninit = sdk.setupUninit(versionGraph)

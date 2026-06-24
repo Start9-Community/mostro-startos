@@ -58,8 +58,10 @@ const expirationSchema = z.object({
   dm_days: natural(30),
 })
 
+// The admin RPC is localhost-only by Mostro's design (no auth; never exposed).
+// These are fixed by the package, not user-configurable.
 const rpcSchema = z.object({
-  enabled: z.boolean().catch(false),
+  enabled: z.boolean().catch(true),
   listen_address: z.string().catch('127.0.0.1'),
   port: natural(50051),
   rate_limiter_stale_duration: natural(3600),

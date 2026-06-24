@@ -1,16 +1,16 @@
-import { storeJson } from '../fileModels/store.json'
-import { daemon_settings } from '../fileModels/settings'
-import { i18n } from '../i18n'
-import { sdk } from '../sdk'
-import { lndCredPaths } from '../utils'
+import { daemon_settings } from '../../fileModels/settings'
+import { i18n } from '../../i18n'
+import { sdk } from '../../sdk'
+import { lndCredPaths } from '../../utils'
 
 const { InputSpec, Value } = sdk
 
 export const inputSpec = InputSpec.of({
   invoice_expiration_window: Value.number({
-    name: 'Invoice Expiration Window',
-    description:
+    name: i18n('Invoice Expiration Window'),
+    description: i18n(
       'Lightning invoices sent by the buyer to Mostro should have at least this expiration time in seconds',
+    ),
     default: 3600,
     required: true,
     integer: true,
@@ -18,8 +18,8 @@ export const inputSpec = InputSpec.of({
     max: 86400,
   }),
   hold_invoice_cltv_delta: Value.number({
-    name: 'Hold Invoice CLTV Delta',
-    description: 'Hold invoice cltv delta (expiration time in blocks)',
+    name: i18n('Hold Invoice CLTV Delta'),
+    description: i18n('Hold invoice cltv delta (expiration time in blocks)'),
     default: 144,
     required: true,
     integer: true,
@@ -27,9 +27,10 @@ export const inputSpec = InputSpec.of({
     max: 1000,
   }),
   hold_invoice_expiration_window: Value.number({
-    name: 'Hold Invoice Expiration Window',
-    description:
+    name: i18n('Hold Invoice Expiration Window'),
+    description: i18n(
       'This is the time that a taker has to pay the invoice (seller) or to add a new invoice (buyer), in seconds',
+    ),
     default: 300,
     required: true,
     integer: true,
@@ -37,8 +38,8 @@ export const inputSpec = InputSpec.of({
     max: 3600,
   }),
   payment_attempts: Value.number({
-    name: 'Payment Attempts',
-    description: 'Retries for failed payments',
+    name: i18n('Payment Attempts'),
+    description: i18n('Retries for failed payments'),
     default: 3,
     required: true,
     integer: true,
@@ -46,8 +47,8 @@ export const inputSpec = InputSpec.of({
     max: 10,
   }),
   payment_retries_interval: Value.number({
-    name: 'Payment Retries Interval',
-    description: 'Retries interval for failed payments in seconds',
+    name: i18n('Payment Retries Interval'),
+    description: i18n('Retries interval for failed payments in seconds'),
     default: 60,
     required: true,
     integer: true,
@@ -61,10 +62,12 @@ export const lnSettings = sdk.Action.withInput(
 
   async () => ({
     name: i18n('Configure Lightning Node Settings'),
-    description: i18n('Configure Lightning node connection settings for Mostro'),
+    description: i18n(
+      'Configure Lightning node connection settings for Mostro',
+    ),
     warning: null,
     allowedStatuses: 'any',
-    group: i18n('Mostro'),
+    group: i18n('Lightning'),
     visibility: 'enabled',
   }),
 
@@ -76,22 +79,17 @@ export const lnSettings = sdk.Action.withInput(
       .once()
 
     return {
-      invoice_expiration_window: lightningConfig?.invoice_expiration_window ?? 3600,
+      invoice_expiration_window:
+        lightningConfig?.invoice_expiration_window ?? 3600,
       hold_invoice_cltv_delta: lightningConfig?.hold_invoice_cltv_delta ?? 144,
       hold_invoice_expiration_window:
         lightningConfig?.hold_invoice_expiration_window ?? 300,
       payment_attempts: lightningConfig?.payment_attempts ?? 3,
-      payment_retries_interval:
-        lightningConfig?.payment_retries_interval ?? 60,
+      payment_retries_interval: lightningConfig?.payment_retries_interval ?? 60,
     }
   },
 
   async ({ effects, input }) => {
-    const store = await storeJson.read((s) => s?.nostrKeysConfigured).once()
-    if (store === null) {
-      await storeJson.merge(effects, { nostrKeysConfigured: false })
-    }
-
     await daemon_settings.merge(effects, {
       lightning: {
         lnd_cert_file: lndCredPaths.cert,

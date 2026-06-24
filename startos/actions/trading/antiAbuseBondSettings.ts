@@ -1,25 +1,26 @@
-import { storeJson } from '../fileModels/store.json'
-import { daemon_settings } from '../fileModels/settings'
-import { i18n } from '../i18n'
-import { sdk } from '../sdk'
+import { daemon_settings } from '../../fileModels/settings'
+import { i18n } from '../../i18n'
+import { sdk } from '../../sdk'
 
 const { InputSpec, Value } = sdk
 
 export const inputSpec = InputSpec.of({
   enabled: Value.select({
-    name: 'Anti-Abuse Bond Enabled',
-    description:
+    name: i18n('Anti-Abuse Bond Enabled'),
+    description: i18n(
       'Require a Lightning hold-invoice bond from takers and/or makers (opt-in)',
+    ),
     default: 'false',
     values: {
-      true: 'Enabled',
-      false: 'Disabled',
+      true: i18n('Enabled'),
+      false: i18n('Disabled'),
     },
   }),
   amount_pct: Value.number({
-    name: 'Bond Amount Percentage',
-    description:
+    name: i18n('Bond Amount Percentage'),
+    description: i18n(
       'Bond = max(amount_pct × order_amount_sats, base_amount_sats). Unitless fraction (0.01 = 1%)',
+    ),
     default: 0.01,
     required: true,
     integer: false,
@@ -27,8 +28,8 @@ export const inputSpec = InputSpec.of({
     max: 1,
   }),
   base_amount_sats: Value.number({
-    name: 'Bond Base Amount (sats)',
-    description: 'Minimum bond floor in satoshis',
+    name: i18n('Bond Base Amount (sats)'),
+    description: i18n('Minimum bond floor in satoshis'),
     default: 1000,
     required: true,
     integer: true,
@@ -36,28 +37,29 @@ export const inputSpec = InputSpec.of({
     max: 1_000_000,
   }),
   apply_to: Value.select({
-    name: 'Apply Bond To',
-    description: 'Which order side must post the bond',
+    name: i18n('Apply Bond To'),
+    description: i18n('Which order side must post the bond'),
     default: 'take',
     values: {
-      take: 'Takers only',
-      make: 'Makers only',
-      both: 'Both takers and makers',
+      take: i18n('Takers only'),
+      make: i18n('Makers only'),
+      both: i18n('Both takers and makers'),
     },
   }),
   slash_on_waiting_timeout: Value.select({
-    name: 'Slash On Waiting Timeout',
-    description: 'Slash the bond when a waiting timeout occurs',
+    name: i18n('Slash On Waiting Timeout'),
+    description: i18n('Slash the bond when a waiting timeout occurs'),
     default: 'false',
     values: {
-      true: 'Enabled',
-      false: 'Disabled',
+      true: i18n('Enabled'),
+      false: i18n('Disabled'),
     },
   }),
   slash_node_share_pct: Value.number({
-    name: 'Node Slash Share',
-    description:
+    name: i18n('Node Slash Share'),
+    description: i18n(
       'Fraction of a slashed bond retained by this node (remainder goes to counterparty)',
+    ),
     default: 0.5,
     required: true,
     integer: false,
@@ -65,8 +67,10 @@ export const inputSpec = InputSpec.of({
     max: 1,
   }),
   payout_invoice_window_seconds: Value.number({
-    name: 'Payout Invoice Window',
-    description: 'Seconds the winner has to submit a bolt11 invoice for payout',
+    name: i18n('Payout Invoice Window'),
+    description: i18n(
+      'Seconds the winner has to submit a bolt11 invoice for payout',
+    ),
     default: 300,
     required: true,
     integer: true,
@@ -74,8 +78,8 @@ export const inputSpec = InputSpec.of({
     max: 3600,
   }),
   payout_max_retries: Value.number({
-    name: 'Payout Max Retries',
-    description: 'Maximum payout retry attempts',
+    name: i18n('Payout Max Retries'),
+    description: i18n('Maximum payout retry attempts'),
     default: 5,
     required: true,
     integer: true,
@@ -83,9 +87,10 @@ export const inputSpec = InputSpec.of({
     max: 20,
   }),
   payout_claim_window_days: Value.number({
-    name: 'Payout Claim Window (days)',
-    description:
+    name: i18n('Payout Claim Window (days)'),
+    description: i18n(
       'Days the winner has to claim their share; after this the bond is forfeited',
+    ),
     default: 15,
     required: true,
     integer: true,
@@ -104,7 +109,7 @@ export const antiAbuseBondSettings = sdk.Action.withInput(
     ),
     warning: null,
     allowedStatuses: 'any',
-    group: i18n('Mostro'),
+    group: i18n('Trading'),
     visibility: 'enabled',
   }),
 
@@ -129,11 +134,6 @@ export const antiAbuseBondSettings = sdk.Action.withInput(
   },
 
   async ({ effects, input }) => {
-    const configured = await storeJson.read((s) => s?.nostrKeysConfigured).once()
-    if (configured === null) {
-      await storeJson.merge(effects, { nostrKeysConfigured: false })
-    }
-
     await daemon_settings.merge(effects, {
       anti_abuse_bond: {
         enabled: input.enabled === 'true',

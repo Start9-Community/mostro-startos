@@ -1,229 +1,33 @@
-# Mostro Instructions
+# Mostro
 
-Mostro is a peer-to-peer Bitcoin exchange platform built on top of the Lightning Network and Nostr protocol. This guide covers how to configure and use Mostro on StartOS.
+Mostro needs a **fully synced LND node** and a **Nostr identity** before it can trade. Install and sync LND first; a setup task walks you through the Nostr key on first launch.
 
-## Overview
+## Documentation
 
-Mostro enables users to buy and sell Bitcoin without KYC requirements while maintaining privacy and censorship resistance. It operates as a decentralized escrow service using:
+- [Mostro website](https://mostro.network/) — what Mostro is and how it works.
+- [Mostro protocol documentation](https://mostro.network/protocol/) — the technical reference for the trading and escrow protocol.
 
-- **Lightning Network** for fast, low-cost Bitcoin transactions
-- **Nostr protocol** for decentralized communication
-- **Hold invoices** for secure escrow functionality
-- **Reputation systems** for trustless trading
+## What you get on StartOS
 
-## Quick Start
+Installing this runs **your own Mostro instance** — the `mostrod` daemon that acts as a coordinator and Lightning escrow for no-KYC Bitcoin trades. It is a background service with **no web interface**: it makes only outbound connections (to Nostr relays and to your LND node), and traders interact with it over Nostr — never by connecting to your StartOS box. StartOS manages the daemon's `settings.toml` for you through the actions below.
 
-1. **Install Dependencies**: Ensure you have LND installed and synced
-2. **Configure Settings**: Use the "Configure Mostro Settings" action
-3. **Set up Lightning**: Connect to your Lightning node
-4. **Configure Nostr**: Set your private key and relays
-5. **Start Trading**: Access the RPC interface if enabled
+## Getting set up
 
-## Configuration
+1. **Install and sync LND.** Mostro requires LND and waits until it is fully synced. Do this first.
+2. **Set your Nostr key.** On install you'll see a required **Set Nostr Key** task — paste your Nostr private key (`nsec…`). This key *is* your instance's identity; its public form (`npub`) is how traders find and address your instance.
+3. **Relays (usually leave as-is).** A default relay is provided, so you typically don't need to touch this. Use **Set Nostr Relays** to add your own relays or point at a relay you run.
+4. **Trading parameters (optional).** **Configure Mostro Settings** sets your instance name/metadata, fees, order limits, and accepted fiat currencies; **Configure Lightning Node Settings** tunes invoice and payment behavior; **Configure Event Expiration** and **Configure Anti-Abuse Bond** adjust event retention and trade bonding. The defaults are sensible to start.
+5. **Start Mostro.** Once the Nostr key is set and LND is synced, start the service. Changing a setting afterward restarts the daemon automatically so it picks up the new config — no manual restart needed.
 
-### Lightning Node Setup
+## Using Mostro
 
-Mostro requires a Lightning node to function. Configure your Lightning connection in the settings:
+There is **no app to open and no interface to connect to** — and that's expected. Mostro is a Nostr/Lightning *client*, just like the people trading on it. Your instance and the trader clients each connect *outward* to shared Nostr **relays** and communicate by passing messages through those relays; nothing connects to your StartOS box directly.
 
-- **LND Certificate Path**: Location of your LND TLS certificate
-- **LND Macaroon Path**: Location of your LND admin macaroon  
-- **LND gRPC Host**: Your LND node's gRPC endpoint
-- **Invoice Settings**: Configure timeouts and retry attempts
+So "using" your instance means people **trade against it with a Mostro client app**:
 
-**Default paths** (if using StartOS LND):
-```
-Certificate: /mostro/lnd-creds/tls.cert
-Macaroon: /mostro/lnd-creds/admin.macaroon
-Host: https://lnd.startos:10009
-```
+1. A trader installs a Mostro client — [mostro-cli](https://github.com/MostroP2P/mostro-cli) (command line) or [Mostro Mobile](https://github.com/MostroP2P/mobile) (Android) — and points it at the **same relay(s)** your instance uses, plus your instance's **npub**. (Clients can also discover instances on a relay automatically, since `mostrod` publishes a "Mostro info" event.)
+2. They post an order; it lands on the relay; your `mostrod` picks it up, runs the Lightning hold-invoice escrow, and replies over the relay; their client shows the result.
 
-### Nostr Configuration
+### Administering your instance
 
-Mostro uses Nostr for decentralized messaging:
-
-- **Private Key**: Your Nostr private key (nsec format)
-- **Relays**: Comma-separated list of Nostr relay URLs
-
-**Security Note**: Keep your Nostr private key secure. This key identifies your Mostro node on the network.
-
-### Trading Parameters
-
-Configure your Mostro trading parameters:
-
-- **Fee Structure**: Set your trading fees (0-100%)
-- **Order Limits**: Set minimum/maximum order amounts
-- **Expiration Times**: Configure order and payment timeouts
-- **Routing Fees**: Set maximum Lightning routing fees
-
-### Database & RPC
-
-- **Database Connectivity**: Verifies SQLite database access (`sqlite://mostro.db` in `/mostro`)
-- **RPC Interface**: Enable for programmatic access (optional)
-- **Proof of Work**: Configure anti-spam difficulty
-
-## Interfaces
-
-### RPC Interface
-
-When enabled, the RPC interface allows programmatic interaction with your Mostro node:
-
-- **Port**: 50051 (configurable)
-- **Protocol**: gRPC
-- **Access**: Local network only by default
-
-Use this interface for:
-- Automated trading bots
-- Custom integrations
-- Administrative tasks
-
-## Properties
-
-Monitor your Mostro node status through the StartOS properties panel:
-
-- **Lightning Connection**: Shows LND connectivity status
-- **Nostr Relays**: Displays connected relay information
-- **Active Orders**: Current trading activity
-- **Node Reputation**: Your reputation score on the network
-
-## Health Checks
-
-StartOS automatically monitors:
-
-- **Lightning Node Sync**: Ensures LND is synced and reachable
-- **Database Connectivity**: Verifies SQLite database access
-- **Nostr Relay Connections**: Checks relay connectivity
-- **Process Status**: Monitors the Mostro daemon
-
-## Backups
-
-### What Gets Backed Up
-
-StartOS automatically backs up:
-- Configuration settings
-- Database (order history, reputation data)
-- Lightning certificates and macaroons
-- Nostr keys and relay configurations
-
-### Restore Process
-
-During restore:
-1. Configuration is restored from backup
-2. Database is restored with historical data
-3. Lightning connection is re-established
-4. Nostr relays are reconnected
-
-**Important**: After restore, verify your Lightning node connection and Nostr relay connectivity.
-
-## Troubleshooting
-
-### Common Issues
-
-**Lightning Connection Failed**
-- Verify LND is running and synced
-- Check certificate and macaroon paths
-- Ensure gRPC host is correct
-
-**Nostr Relay Errors**
-- Test relay connectivity manually
-- Try different relay servers
-- Check firewall settings
-
-**Database Errors**
-- Restart the Mostro service
-- Check disk space availability
-- Review service logs
-
-**Orders Not Appearing**
-- Verify Nostr relay connections
-- Check proof-of-work settings
-- Ensure sufficient Lightning capacity
-
-### Log Analysis
-
-Access Mostro logs through StartOS:
-1. Navigate to Services → Mostro
-2. Click "Logs" to view recent activity
-3. Look for error messages or warnings
-4. Check Lightning and Nostr connectivity
-
-## Security Considerations
-
-### Private Key Management
-- **Backup**: Securely backup your Nostr private key
-- **Access**: Never share your private key
-- **Rotation**: Consider key rotation for long-term security
-
-### Lightning Security
-- **Channel Management**: Maintain adequate Lightning liquidity
-- **Fee Limits**: Set reasonable routing fee limits
-- **Monitoring**: Monitor for unusual activity
-
-### Network Security
-- **Relay Selection**: Choose trusted Nostr relays
-- **TLS**: Ensure all connections use encryption
-- **Updates**: Keep Mostro and dependencies updated
-
-## Advanced Configuration
-
-### Custom Relay Setup
-
-For enhanced privacy, consider running your own Nostr relay:
-1. Set up a private Nostr relay
-2. Configure Mostro to use your relay
-3. Optionally bridge to public relays
-
-### Lightning Liquidity Management
-
-Optimize your Lightning setup:
-- **Inbound Liquidity**: Ensure sufficient incoming capacity
-- **Outbound Liquidity**: Maintain outgoing payment ability
-- **Channel Management**: Balance channel distributions
-
-### API Integration
-
-Use the RPC interface for custom integrations:
-- Connect trading bots
-- Integrate with other services
-- Build custom monitoring tools
-
-## External Resources
-
-### Official Documentation
-- [Mostro GitHub Repository](https://github.com/MostroP2P/mostro)
-- [Mostro Website](https://mostro.network/)
-- [Telegram Support](https://t.me/MostroP2P)
-
-### Lightning Network Resources
-- [Lightning Network Documentation](https://lightning.network/)
-- [LND Documentation](https://docs.lightning.engineering/)
-- [Lightning Pool](https://lightning.engineering/pool/)
-
-### Nostr Protocol Resources
-- [Nostr Protocol Specification](https://github.com/nostr-protocol/nips)
-- [Nostr Relays](https://nostr.watch/)
-- [Nostr Clients](https://github.com/aljazceru/awesome-nostr)
-
-### Trading and P2P Resources
-- [Bitcoin P2P Trading Guide](https://bitcoiner.guide/hodl/)
-- [Lightning Network Trading](https://lightning.engineering/posts/2020-10-09-pool-deep-dive/)
-
-## Support
-
-For technical support:
-
-1. **StartOS Issues**: Use the StartOS community forums
-2. **Mostro Issues**: Visit the [GitHub repository](https://github.com/MostroP2P/mostro) 
-3. **General Help**: Join the [Telegram group](https://t.me/MostroP2P)
-4. **Security Issues**: Report privately to the Mostro team
-
-## Contributing
-
-Help improve Mostro:
-- Report bugs on GitHub
-- Contribute code improvements
-- Share trading experiences
-- Help with documentation
-
----
-
-**Disclaimer**: Peer-to-peer trading involves risks. Understand local regulations and trade responsibly. Mostro is experimental software - use at your own risk.
+Dispute resolution and admin overrides go through Mostro's gRPC **admin API**, which — by Mostro's own design — is **localhost-only, with no authentication, and is never exposed on the network**. You run an admin client against it from the StartOS box itself (for example via `start-cli package attach`), or use the upstream [MostriX](https://github.com/MostroP2P/mostrix) admin tool there. Off-box admin access is intentionally not provided; see the upstream RPC/admin documentation for the available commands.

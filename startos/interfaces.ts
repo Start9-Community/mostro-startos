@@ -1,26 +1,7 @@
 import { sdk } from './sdk'
 
-export const setInterfaces = sdk.setupInterfaces(async ({ effects }) => {
-  // RPC
-  const rpcMulti = sdk.MultiHost.of(effects, 'rpc')
-  const rpcMultiOrigin = await rpcMulti.bindPort(50051, {
-    protocol: 'http',
-    preferredExternalPort: 50051,
-  })
-  const rpc = sdk.createInterface(effects, {
-    name: 'RPC Interface',
-    id: 'rpc',
-    description: 'Listens for JSON-RPC commands',
-    type: 'api',
-    masked: false,
-    schemeOverride: null,
-    username: null,
-    path: '',
-    query: {},
-  })
-  const rpcReceipt = await rpcMultiOrigin.export([rpc])
-
-  const receipts = [rpcReceipt]
-
-  return receipts
-})
+// Mostro exposes no inbound network interface. It is a Nostr/Lightning client:
+// it makes only outbound connections (to Nostr relays and to LND), and traders
+// interact with it entirely through shared Nostr relays — never by connecting
+// to this service directly. The admin gRPC is localhost-only (see main.ts).
+export const setInterfaces = sdk.setupInterfaces(async () => [])

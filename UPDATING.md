@@ -26,8 +26,7 @@ Mostro is packaged as a pre-built Docker image from Docker Hub.
 2. Edit `startos/versions/current.ts` — bump `version` to match upstream semver without the `v` (e.g. `0.17.4:0`)
 3. If the bump requires a migration, rename the old `current.ts` to `vX.Y.Z_N.ts`, add it to `other[]` in `startos/versions/index.ts`, then write the new `current.ts`
 4. Update release notes in `current.ts` (all locales)
-5. RPC health check reads the tag from the manifest automatically (`main.ts` strips the `v` prefix)
-6. Build and test: `make clean x86 install`
+5. Build and test: `make clean x86 install`
 
 ## Git tag
 
