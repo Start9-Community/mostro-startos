@@ -75,10 +75,13 @@ export function isValidNsec(nsec: string): boolean {
 /** Read-only mount point for the LND dependency's data volume. */
 export const lndMount = '/mnt/lnd'
 
-/** Writable copies of LND TLS cert + admin macaroon (source mount is read-only). */
+/**
+ * LND TLS cert + admin macaroon, read directly off LND's idmapped readonly
+ * dependency mount (no copy). `grpcHost` is a fallback only — main resolves
+ * LND's gRPC bridge URL at runtime.
+ */
 export const lndCredPaths = {
-  dir: '/mostro/lnd-creds',
-  cert: '/mostro/lnd-creds/tls.cert',
-  macaroon: '/mostro/lnd-creds/admin.macaroon',
+  cert: `${lndMount}/tls.cert`,
+  macaroon: `${lndMount}/data/chain/bitcoin/mainnet/admin.macaroon`,
   grpcHost: 'https://lnd.startos:10009',
 } as const

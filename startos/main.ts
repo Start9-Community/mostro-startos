@@ -1,3 +1,7 @@
+import {
+  gRPCHostId as lndGrpcHostId,
+  gRPCInterfaceId as lndGrpcInterfaceId,
+} from 'lnd-startos/startos/interfaces'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
 import { daemon_settings } from './fileModels/settings'
@@ -9,10 +13,36 @@ export const main = sdk.setupMain(async ({ effects }) => {
   const depResult = await sdk.checkDependencies(effects)
   depResult.throwIfNotSatisfied()
 
+  // LND's gRPC over the bridge — LND's StartOS-issued cert now covers the bridge
+  // address, so mostro pins it (read via the idmap mount) and connects there.
+  const lndGrpcUrl =
+    (await sdk.host
+      .get(
+        effects,
+        { hostId: lndGrpcHostId, packageId: 'lnd' },
+        (host) => {
+          const iface =
+            host &&
+            Object.values(host.bindings)
+              .flatMap((b) => Object.values(b.interfaces))
+              .find((i) => i.id === lndGrpcInterfaceId)
+          return iface
+            ? iface.addressInfo
+                .filter({
+                  kind: 'bridge',
+                  predicate: (h) => h.ssl && h.metadata.kind === 'ipv4',
+                })
+                .format('urlstring')[0]
+            : undefined
+        },
+      )
+      .const()) ?? lndCredPaths.grpcHost
+
   await daemon_settings.merge(effects, {
     lightning: {
       lnd_cert_file: lndCredPaths.cert,
       lnd_macaroon_file: lndCredPaths.macaroon,
+      lnd_grpc_host: lndGrpcUrl,
     },
     // Keep the admin RPC fixed on at localhost — it's Mostro's local-only admin
     // channel, never network-exposed.
@@ -36,9 +66,12 @@ export const main = sdk.setupMain(async ({ effects }) => {
       subpath: null,
       mountpoint: lndMount,
       readonly: true,
+      // LND writes its creds as root (uid 0); remap to mostrouser (1000) so the
+      // daemon reads tls.cert + admin.macaroon directly off the mount.
+      idmap: [{ fromId: 0, toId: 1000 }],
     })
 
-  const mostroSub = await sdk.SubContainer.of(
+  const mostroSub = sdk.SubContainer.of(
     effects,
     { imageId: 'mostro' },
     mainMount,
@@ -48,21 +81,10 @@ export const main = sdk.setupMain(async ({ effects }) => {
   return sdk.Daemons.of(effects)
     .addOneshot('prepare-runtime', {
       subcontainer: mostroSub,
+      // Give mostrouser ownership of its own data volume. LND's creds are read
+      // directly off the idmapped dependency mount — no copy needed.
       exec: {
-        command: [
-          'sh',
-          '-c',
-          [
-            'set -e',
-            `mkdir -p ${lndCredPaths.dir}`,
-            `cp -f ${lndMount}/tls.cert ${lndCredPaths.cert}`,
-            `macaroon="$(find ${lndMount} -name admin.macaroon -print -quit)"`,
-            `if [ -z "$macaroon" ]; then echo "admin.macaroon not found under ${lndMount}" >&2; exit 1; fi`,
-            `cp -f "$macaroon" ${lndCredPaths.macaroon}`,
-            'chown -R mostrouser:mostrouser /mostro',
-            `chmod 600 ${lndCredPaths.cert} ${lndCredPaths.macaroon}`,
-          ].join('\n'),
-        ],
+        command: ['chown', '-R', 'mostrouser:mostrouser', '/mostro'],
         user: 'root',
       },
       requires: [],
