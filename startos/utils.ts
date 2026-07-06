@@ -72,7 +72,9 @@ function bech32Decode(str: string): { hrp: string; bytes: number[] } | null {
 export function isValidNsec(nsec: string): boolean {
   if (typeof nsec !== 'string') return false
   const decoded = bech32Decode(nsec.trim())
-  return decoded !== null && decoded.hrp === 'nsec' && decoded.bytes.length === 32
+  return (
+    decoded !== null && decoded.hrp === 'nsec' && decoded.bytes.length === 32
+  )
 }
 
 /** Read-only mount point for the LND dependency's data volume. */
@@ -80,14 +82,13 @@ export const lndMount = '/mnt/lnd'
 
 /**
  * LND TLS cert + admin macaroon, read directly off LND's idmapped readonly
- * dependency mount (no copy). `grpcHost` is a loopback placeholder used only
- * until LND's gRPC binding resolves — main reconciles `lnd_grpc_host` to LND's
- * gRPC bridge address reactively (see `bridgeAddress`).
+ * dependency mount (no copy). Main reconciles `lnd_grpc_host` to LND's gRPC
+ * bridge address reactively (see `bridgeAddress`); until it resolves the field
+ * is left unwritten rather than pointed at a placeholder.
  */
 export const lndCredPaths = {
   cert: `${lndMount}/tls.cert`,
   macaroon: `${lndMount}/data/chain/bitcoin/mainnet/admin.macaroon`,
-  grpcHost: 'https://127.0.0.1:10009',
 } as const
 
 /**
@@ -131,7 +132,8 @@ export function bridgeAddress(
         const port =
           host?.bindings[opts.internalPort]?.net.assignedPort ??
           opts.fallbackPort
-        return port != null ? `${osIp}:${port}` : null
+        if (port == null) return null
+        return `${osIp}:${port}`
       },
     )
   }

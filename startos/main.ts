@@ -17,20 +17,20 @@ export const main = sdk.setupMain(async ({ effects }) => {
   // address, so mostro pins it (read via the idmap mount) and connects there.
   // The mapped value only changes when LND's assigned gRPC port does, so this
   // .const() costs one healing restart when LND's gRPC binding first appears
-  // at wallet unlock, then stays put across lock/unlock cycles. Null (LND not
-  // installed) falls back to the loopback placeholder until it heals.
+  // at wallet unlock, then stays put across lock/unlock cycles. Null (binding
+  // not yet published) leaves lnd_grpc_host unwritten so the daemon fails its
+  // LND connection naturally until the .const() heals in the real address.
   const lndBridge = await bridgeAddress(effects, {
     packageId: 'lnd',
     hostId: lndGrpcHostId,
     internalPort: lndGrpcPort,
   }).const()
-  const lndGrpcUrl = lndBridge ? `https://${lndBridge}` : lndCredPaths.grpcHost
 
   await daemon_settings.merge(effects, {
     lightning: {
       lnd_cert_file: lndCredPaths.cert,
       lnd_macaroon_file: lndCredPaths.macaroon,
-      lnd_grpc_host: lndGrpcUrl,
+      ...(lndBridge ? { lnd_grpc_host: `https://${lndBridge}` } : {}),
     },
     // Keep the admin RPC fixed on at localhost — it's Mostro's local-only admin
     // channel, never network-exposed.
