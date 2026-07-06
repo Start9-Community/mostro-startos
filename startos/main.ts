@@ -1,11 +1,11 @@
 import {
   gRPCHostId as lndGrpcHostId,
-  gRPCInterfaceId as lndGrpcInterfaceId,
+  gRPCPort as lndGrpcPort,
 } from 'lnd-startos/startos/interfaces'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
 import { daemon_settings } from './fileModels/settings'
-import { lndCredPaths, lndMount } from './utils'
+import { bridgeAddress, lndCredPaths, lndMount } from './utils'
 
 export const main = sdk.setupMain(async ({ effects }) => {
   console.info(i18n('Starting Mostro!'))
@@ -13,30 +13,18 @@ export const main = sdk.setupMain(async ({ effects }) => {
   const depResult = await sdk.checkDependencies(effects)
   depResult.throwIfNotSatisfied()
 
-  // LND's gRPC over the bridge — LND's StartOS-issued cert now covers the bridge
+  // LND's gRPC over the bridge — LND's StartOS-issued cert covers the bridge
   // address, so mostro pins it (read via the idmap mount) and connects there.
-  const lndGrpcUrl =
-    (await sdk.host
-      .get(
-        effects,
-        { hostId: lndGrpcHostId, packageId: 'lnd' },
-        (host) => {
-          const iface =
-            host &&
-            Object.values(host.bindings)
-              .flatMap((b) => Object.values(b.interfaces))
-              .find((i) => i.id === lndGrpcInterfaceId)
-          return iface
-            ? iface.addressInfo
-                .filter({
-                  kind: 'bridge',
-                  predicate: (h) => h.ssl && h.metadata.kind === 'ipv4',
-                })
-                .format('urlstring')[0]
-            : undefined
-        },
-      )
-      .const()) ?? lndCredPaths.grpcHost
+  // The mapped value only changes when LND's assigned gRPC port does, so this
+  // .const() costs one healing restart when LND's gRPC binding first appears
+  // at wallet unlock, then stays put across lock/unlock cycles. Null (LND not
+  // installed) falls back to the loopback placeholder until it heals.
+  const lndBridge = await bridgeAddress(effects, {
+    packageId: 'lnd',
+    hostId: lndGrpcHostId,
+    internalPort: lndGrpcPort,
+  }).const()
+  const lndGrpcUrl = lndBridge ? `https://${lndBridge}` : lndCredPaths.grpcHost
 
   await daemon_settings.merge(effects, {
     lightning: {
