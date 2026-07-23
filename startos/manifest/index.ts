@@ -5,7 +5,7 @@ export const manifest = setupManifest({
   id: 'mostro',
   title: 'Mostro',
   license: 'mit',
-  packageRepo: 'https://github.com/MostroP2P/mostro-startos',
+  packageRepo: 'https://github.com/Start9-Community/mostro-startos',
   upstreamRepo: 'https://github.com/MostroP2P/mostro',
   marketingUrl: 'https://mostro.network/',
   donationUrl: 'https://geyser.fund/project/mostro',
@@ -14,18 +14,10 @@ export const manifest = setupManifest({
   images: {
     mostro: {
       source: {
-        dockerTag: 'mostrop2p/mostro:v0.17.5',
+        dockerTag: 'mostrop2p/mostro:v0.18.0',
       },
       arch: ['x86_64', 'aarch64'],
     },
-  },
-  alerts: {
-    install: null,
-    update: null,
-    uninstall: null,
-    restore: null,
-    start: null,
-    stop: null,
   },
   dependencies: {
     lnd: {

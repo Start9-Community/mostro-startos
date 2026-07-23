@@ -94,7 +94,7 @@ export const lnSettings = sdk.Action.withInput(
       lightning: {
         lnd_cert_file: lndCredPaths.cert,
         lnd_macaroon_file: lndCredPaths.macaroon,
-        lnd_grpc_host: lndCredPaths.grpcHost,
+        // lnd_grpc_host is owned by main (resolved to LND's gRPC bridge URL).
         invoice_expiration_window: input.invoice_expiration_window,
         hold_invoice_cltv_delta: input.hold_invoice_cltv_delta,
         hold_invoice_expiration_window: input.hold_invoice_expiration_window,

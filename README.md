@@ -100,7 +100,7 @@ The entire `main` volume is backed up — configuration, the SQLite database (or
 | --- | --- | --- | --- | --- | --- |
 | LND | Yes | recent LND (see manifest) | `sync-progress` (must be fully synced) | `main` volume mounted read-only at `/mnt/lnd` | Lightning node for hold-invoice escrow and payments |
 
-The package copies LND's `tls.cert` and `admin.macaroon` from the read-only mount into a writable, `mostrouser`-owned directory (`/mostro/lnd-creds/`) at startup, because the daemon's non-root user cannot read the credentials in place. It connects to LND's gRPC endpoint at the internal `lnd.startos` hostname.
+The daemon reads LND's `tls.cert` and `admin.macaroon` directly off the read-only mount — no copy — with the mount idmapped so LND's root-owned (uid 0) credentials are readable as `mostrouser` (uid 1000). It connects to LND's gRPC endpoint over the StartOS LXC bridge; the address is resolved reactively from LND's published binding and pinned against LND's StartOS-issued TLS cert.
 
 ## Limitations and Differences
 
