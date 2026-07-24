@@ -1,7 +1,7 @@
 import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '0.18.0:0',
+  version: '0.18.0:1',
   releaseNotes: {
     en_US:
       'Updated Mostro to 0.18.0. Adds wire protocol v2 (NIP-44 direct messaging) with anti-spam gates, a new El Toque fiat-cross price provider (CUP/MLC), dispute-slash notifications to the slashed party, and assorted fixes. Full notes: https://github.com/MostroP2P/mostro/releases/tag/v0.18.0. Also includes internal updates for start-sdk 2.0.',
