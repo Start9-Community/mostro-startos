@@ -39,7 +39,7 @@
 | Architectures | x86_64, aarch64                                            |
 | Entrypoint    | `mostrod -d /mostro` (data directory on the `main` volume) |
 
-The daemon runs as the image's non-root `mostrouser`. A root `prepare-runtime` one-shot runs first to stage the Lightning credentials (see Dependencies) and fix ownership before the daemon starts.
+The daemon runs as the image's non-root `mostrouser`. A root `prepare-runtime` one-shot takes ownership of the data volume before the daemon starts; the Lightning credentials are read straight off a read-only mount (see Dependencies).
 
 ## Volume and Data Layout
 
@@ -48,7 +48,6 @@ The daemon runs as the image's non-root `mostrouser`. A root `prepare-runtime` o
 | `/mostro`               | The `main` volume — the daemon's data directory (read-write)         |
 | `/mostro/settings.toml` | Generated configuration, written by the package from StartOS actions |
 | `/mostro/mostro.db`     | Embedded SQLite database (orders, ratings, disputes)                 |
-| `/mostro/lnd-creds/`    | Writable copies of the LND TLS cert and admin macaroon               |
 | `/mnt/lnd`              | The LND dependency's `main` volume, mounted read-only                |
 
 ## Installation and First-Run Flow
@@ -65,7 +64,7 @@ All configuration is StartOS-managed: the package owns `settings.toml` and rewri
 | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | Lightning invoice/payment parameters, Nostr keys & relays, trading/business parameters, event-retention windows, anti-abuse bond policy | Mostro exposes no in-app settings UI; everything is driven from `settings.toml` |
 
-The LND credential paths and gRPC host in `settings.toml` are managed by the package and point at the mounted/staged LND credentials; you do not set them manually.
+The LND credential paths and gRPC host in `settings.toml` are managed by the package and point at the read-only LND mount; you do not set them manually.
 
 ## Network Access and Interfaces
 
@@ -86,7 +85,7 @@ All actions are visible (`enabled`) at any service status, grouped in the StartO
 
 ## Backups and Restore
 
-The entire `main` volume is backed up — configuration, the SQLite database (order/rating/dispute history), and the staged LND credential copies. On restore the daemon resumes from the restored data directory; LND connectivity is re-established from the restored settings.
+The entire `main` volume is backed up — configuration and the SQLite database (order/rating/dispute history). On restore the daemon resumes from the restored data directory; LND connectivity is re-established from the restored settings.
 
 ## Health Checks
 
