@@ -10,7 +10,7 @@ Work this package's `TODO.md` from top to bottom. Keep `README.md` (architecture
 
 ## This repo
 
-- **Package id is `mostro`.** It is a dependent of `lnd`: it imports `gRPCHostId` / `gRPCInterfaceId` from `lnd-startos/startos/interfaces` to resolve LND's gRPC over the LXC bridge, and reads LND's TLS cert + macaroon off a read-only dependency mount idmapped to `mostrouser` (uid 1000).
+- **Package id is `mostro`.** It is a dependent of `lnd`: it imports `gRPCHostId` / `gRPCPort` from `lnd-startos/startos/interfaces` to resolve LND's gRPC over the LXC bridge, and reads LND's TLS cert + macaroon off a read-only dependency mount idmapped to `mostrouser` (uid 1000).
 
 ## Inspecting a running install
 
