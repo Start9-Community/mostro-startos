@@ -80,7 +80,7 @@ export const lndMount = '/mnt/lnd'
 /**
  * LND TLS cert + admin macaroon, read directly off LND's idmapped readonly
  * dependency mount (no copy). Main reconciles `lnd_grpc_host` to LND's gRPC
- * bridge address reactively (see `bridgeAddress`); until it resolves the field
+ * bridge address reactively (`sdk.host.getBridgeAddress`); until it resolves the field
  * is left unwritten rather than pointed at a placeholder.
  */
 export const lndCredPaths = {

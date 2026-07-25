@@ -15,7 +15,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
 
   // LND's gRPC over the bridge — LND's StartOS-issued cert covers the bridge
   // address, so mostro pins it (read via the idmap mount) and connects there.
-  // The mapped value only changes when LND's assigned gRPC port does, so this
+  // The bridge address only changes when LND's gRPC binding does, so this
   // .const() costs one healing restart when LND's gRPC binding first appears
   // at wallet unlock, then stays put across lock/unlock cycles. Null (binding
   // not yet published) leaves lnd_grpc_host unwritten so the daemon fails its
