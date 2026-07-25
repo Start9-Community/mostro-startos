@@ -33,23 +33,23 @@
 
 ## Image and Container Runtime
 
-| | |
-| --- | --- |
-| Image source | Upstream `mostrop2p/mostro` Docker image, unmodified |
-| Architectures | x86_64, aarch64 |
-| Entrypoint | `mostrod -d /mostro` (data directory on the `main` volume) |
+|               |                                                            |
+| ------------- | ---------------------------------------------------------- |
+| Image source  | Upstream `mostrop2p/mostro` Docker image, unmodified       |
+| Architectures | x86_64, aarch64                                            |
+| Entrypoint    | `mostrod -d /mostro` (data directory on the `main` volume) |
 
 The daemon runs as the image's non-root `mostrouser`. A root `prepare-runtime` one-shot runs first to stage the Lightning credentials (see Dependencies) and fix ownership before the daemon starts.
 
 ## Volume and Data Layout
 
-| Path | Purpose |
-| --- | --- |
-| `/mostro` | The `main` volume — the daemon's data directory (read-write) |
+| Path                    | Purpose                                                              |
+| ----------------------- | -------------------------------------------------------------------- |
+| `/mostro`               | The `main` volume — the daemon's data directory (read-write)         |
 | `/mostro/settings.toml` | Generated configuration, written by the package from StartOS actions |
-| `/mostro/mostro.db` | Embedded SQLite database (orders, ratings, disputes) |
-| `/mostro/lnd-creds/` | Writable copies of the LND TLS cert and admin macaroon |
-| `/mnt/lnd` | The LND dependency's `main` volume, mounted read-only |
+| `/mostro/mostro.db`     | Embedded SQLite database (orders, ratings, disputes)                 |
+| `/mostro/lnd-creds/`    | Writable copies of the LND TLS cert and admin macaroon               |
+| `/mnt/lnd`              | The LND dependency's `main` volume, mounted read-only                |
 
 ## Installation and First-Run Flow
 
@@ -61,8 +61,8 @@ The daemon runs as the image's non-root `mostrouser`. A root `prepare-runtime` o
 
 All configuration is StartOS-managed: the package owns `settings.toml` and rewrites it from the values you submit through actions. There is no separate upstream configuration UI.
 
-| StartOS-Managed (via actions) | Not Applicable |
-| --- | --- |
+| StartOS-Managed (via actions)                                                                                                           | Not Applicable                                                                  |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | Lightning invoice/payment parameters, Nostr keys & relays, trading/business parameters, event-retention windows, anti-abuse bond policy | Mostro exposes no in-app settings UI; everything is driven from `settings.toml` |
 
 The LND credential paths and gRPC host in `settings.toml` are managed by the package and point at the mounted/staged LND credentials; you do not set them manually.
@@ -75,14 +75,14 @@ The LND credential paths and gRPC host in `settings.toml` are managed by the pac
 
 All actions are visible (`enabled`) at any service status, grouped in the StartOS UI by area: **Nostr Settings** (key, relays), **Lightning**, and **Trading** (Mostro/expiration/anti-abuse-bond).
 
-| Action | Purpose | Inputs | Output |
-| --- | --- | --- | --- |
-| Configure Lightning Node Settings | Invoice expiry, hold-invoice CLTV delta, payment attempts/intervals | Numeric Lightning parameters | Writes `settings.toml` |
-| Set Nostr Key | Set the Nostr identity (nsec) the daemon signs and trades with | `nsec` private key (masked) | Writes `settings.toml`; clears its task |
-| Set Nostr Relays | Manage the Nostr relays Mostro publishes to and reads from | Add/remove list of `wss://`/`ws://` relay URLs (≥1) | Writes `settings.toml`; clears its task |
-| Configure Mostro Settings | Trading and business logic (metadata, fees, order limits, transport, fiat currencies, price API) | Many trading parameters | Writes `settings.toml` |
-| Configure Event Expiration | Retention windows for each Nostr event type | Per-event-kind day counts | Writes `settings.toml` |
-| Configure Anti-Abuse Bond | Optional Lightning hold-invoice bonds to deter abusive takers/makers | Bond policy parameters | Writes `settings.toml` |
+| Action                            | Purpose                                                                                          | Inputs                                              | Output                                  |
+| --------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------- | --------------------------------------- |
+| Configure Lightning Node Settings | Invoice expiry, hold-invoice CLTV delta, payment attempts/intervals                              | Numeric Lightning parameters                        | Writes `settings.toml`                  |
+| Set Nostr Key                     | Set the Nostr identity (nsec) the daemon signs and trades with                                   | `nsec` private key (masked)                         | Writes `settings.toml`; clears its task |
+| Set Nostr Relays                  | Manage the Nostr relays Mostro publishes to and reads from                                       | Add/remove list of `wss://`/`ws://` relay URLs (≥1) | Writes `settings.toml`; clears its task |
+| Configure Mostro Settings         | Trading and business logic (metadata, fees, order limits, transport, fiat currencies, price API) | Many trading parameters                             | Writes `settings.toml`                  |
+| Configure Event Expiration        | Retention windows for each Nostr event type                                                      | Per-event-kind day counts                           | Writes `settings.toml`                  |
+| Configure Anti-Abuse Bond         | Optional Lightning hold-invoice bonds to deter abusive takers/makers                             | Bond policy parameters                              | Writes `settings.toml`                  |
 
 ## Backups and Restore
 
@@ -90,15 +90,15 @@ The entire `main` volume is backed up — configuration, the SQLite database (or
 
 ## Health Checks
 
-| Check | Meaning |
-| --- | --- |
+| Check         | Meaning                                                                                |
+| ------------- | -------------------------------------------------------------------------------------- |
 | Mostro Daemon | Succeeds once `mostrod` is up and its localhost admin RPC port (`50051`) is listening. |
 
 ## Dependencies
 
-| Dependency | Required | Version | Health checks | Mount | Purpose |
-| --- | --- | --- | --- | --- | --- |
-| LND | Yes | recent LND (see manifest) | `sync-progress` (must be fully synced) | `main` volume mounted read-only at `/mnt/lnd` | Lightning node for hold-invoice escrow and payments |
+| Dependency | Required | Version                   | Health checks                          | Mount                                         | Purpose                                             |
+| ---------- | -------- | ------------------------- | -------------------------------------- | --------------------------------------------- | --------------------------------------------------- |
+| LND        | Yes      | recent LND (see manifest) | `sync-progress` (must be fully synced) | `main` volume mounted read-only at `/mnt/lnd` | Lightning node for hold-invoice escrow and payments |
 
 The daemon reads LND's `tls.cert` and `admin.macaroon` directly off the read-only mount — no copy — with the mount idmapped so LND's root-owned (uid 0) credentials are readable as `mostrouser` (uid 1000). It connects to LND's gRPC endpoint over the StartOS LXC bridge; the address is resolved reactively from LND's published binding and pinned against LND's StartOS-issued TLS cert.
 
@@ -130,11 +130,11 @@ entrypoint: mostrod -d /mostro
 volumes:
   main: /mostro
 mounts:
-  lnd_main: /mnt/lnd   # read-only
-ports: none            # no inbound interface; admin gRPC is localhost-only (127.0.0.1:50051)
+  lnd_main: /mnt/lnd # read-only
+ports: none # no inbound interface; admin gRPC is localhost-only (127.0.0.1:50051)
 dependencies:
-  - lnd                # required; health check: sync-progress
-config_management: file   # settings.toml, written by package actions (no env vars)
+  - lnd # required; health check: sync-progress
+config_management: file # settings.toml, written by package actions (no env vars)
 actions:
   - nostr-key
   - nostr-relays

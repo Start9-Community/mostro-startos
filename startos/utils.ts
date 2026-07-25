@@ -1,5 +1,3 @@
-import { sdk } from './sdk'
-
 /**
  * Nostr validation utilities
  */
