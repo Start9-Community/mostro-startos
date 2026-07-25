@@ -5,7 +5,7 @@ import {
 import { i18n } from './i18n'
 import { sdk } from './sdk'
 import { daemon_settings } from './fileModels/settings'
-import { bridgeAddress, lndCredPaths, lndMount } from './utils'
+import { lndCredPaths, lndMount } from './utils'
 
 export const main = sdk.setupMain(async ({ effects }) => {
   console.info(i18n('Starting Mostro!'))
@@ -20,11 +20,13 @@ export const main = sdk.setupMain(async ({ effects }) => {
   // at wallet unlock, then stays put across lock/unlock cycles. Null (binding
   // not yet published) leaves lnd_grpc_host unwritten so the daemon fails its
   // LND connection naturally until the .const() heals in the real address.
-  const lndBridge = await bridgeAddress(effects, {
-    packageId: 'lnd',
-    hostId: lndGrpcHostId,
-    internalPort: lndGrpcPort,
-  }).const()
+  const lndBridge = await sdk.host
+    .getBridgeAddress(effects, {
+      packageId: 'lnd',
+      hostId: lndGrpcHostId,
+      internalPort: lndGrpcPort,
+    })
+    .const()
 
   await daemon_settings.merge(effects, {
     lightning: {
