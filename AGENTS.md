@@ -6,12 +6,11 @@ Develop it inside a StartOS packaging workspace created by `start-cli s9pk init-
 which provides the packaging guide and agent context one level up. If you're reading this in a
 bare clone with no workspace, the full guide is at <https://docs.start9.com/packaging>.
 
-Work this package's `TODO.md` from top to bottom. Keep `README.md` (architecture, for developers and LLMs) and `instructions.md` (end-user docs) in sync with your changes.
+Work this package's `TODO.md` from top to bottom. Keep `README.md` (technical reference for an AI support or administering agent) and `instructions.md` (end-user docs) in sync with your changes.
 
 ## This repo
 
-- **Package id is `mostro`.** It is a dependent of `lnd`: it imports `gRPCHostId` / `gRPCPort` from `lnd-startos/startos/interfaces` to resolve LND's gRPC over the LXC bridge, and reads LND's TLS cert + macaroon off a read-only dependency mount idmapped to `mostrouser` (uid 1000).
-
-## Inspecting a running install
-
-To run a command inside the service's container (read its generated config, grep app logs), use `start-cli package attach mostro -n mostro-sub -- <cmd>`. Select the subcontainer by **name** with `-n` (the name passed to `SubContainer.of` in `main.ts` — here `mostro-sub`) or by image with `-i`. Note: `-s/--subcontainer` matches the internal **Guid**, not the name, so passing a name to `-s` fails with "no matching subcontainers".
+- **Relay URLs are validated in the handler as well as the form.** `List.text` `patterns` are enforced by the UI only; a programmatic submit bypasses them and a bad relay reaches the config.
+- **Import LND's host id and port from `lnd-startos/startos/interfaces`** rather than hardcoding, so a change on LND's side is a compile error here.
+- **The LND mount is idmapped `0 → 1000`** so `mostrouser` can read credentials LND wrote as root, straight off the read-only mount. Don't replace it with a copy step — a copy goes stale when LND rotates its cert.
+- **The dependency requires LND's `sync-progress` check, not just `running`.** Mostro settles hold invoices; an unsynced node cannot do that safely.

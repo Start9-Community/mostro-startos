@@ -1,16 +1,18 @@
 <p align="center">
-  <img src="icon.svg" alt="Mostro Logo" width="21%">
+  <img src="icon.png" alt="Mostro Logo" width="21%">
 </p>
 
 # Mostro on StartOS
 
-> **Upstream docs:** <https://mostro.network/>
->
 > Everything not listed in this document should behave the same as upstream
-> Mostro. If a feature, setting, or behavior is not mentioned here, the upstream
-> documentation is accurate and fully applicable.
+> Mostro. If a feature, setting, or behavior is not mentioned here, the
+> upstream documentation is accurate and fully applicable — see the
+> Documentation section of `instructions.md` for links.
 
-[Mostro](https://mostro.network/) is a peer-to-peer, no-KYC Bitcoin exchange daemon (`mostrod`) built on the Lightning Network and the Nostr protocol. It acts as a decentralized escrow using Lightning hold invoices, brokering trades that are negotiated and settled over Nostr relays. Upstream source: <https://github.com/MostroP2P/mostro>.
+[Mostro](https://github.com/MostroP2P/mostro) is a peer-to-peer Bitcoin exchange that runs over Nostr: buyers and sellers find each other through relays, and Mostro escrows the trade with Lightning hold invoices. This package runs your own Mostro instance against the LND on the same server.
+
+- **Upstream repo:** <https://github.com/MostroP2P/mostro>
+- **Wrapper repo:** <https://github.com/Start9-Community/mostro-startos>
 
 ---
 
@@ -18,105 +20,190 @@
 
 - [Image and Container Runtime](#image-and-container-runtime)
 - [Volume and Data Layout](#volume-and-data-layout)
-- [Installation and First-Run Flow](#installation-and-first-run-flow)
-- [Configuration Management](#configuration-management)
-- [Network Access and Interfaces](#network-access-and-interfaces)
-- [Actions](#actions)
-- [Backups and Restore](#backups-and-restore)
-- [Health Checks](#health-checks)
+- [File Models](#file-models)
 - [Dependencies](#dependencies)
+- [Network Access and Interfaces](#network-access-and-interfaces)
+- [Installation and First-Run Flow](#installation-and-first-run-flow)
+- [Actions](#actions)
+- [Tasks](#tasks)
+- [Health Checks](#health-checks)
+- [Backups and Restore](#backups-and-restore)
 - [Limitations and Differences](#limitations-and-differences)
-- [What Is Unchanged from Upstream](#what-is-unchanged-from-upstream)
-- [Contributing](#contributing)
+- [Quick Reference for AI Consumers](#quick-reference-for-ai-consumers)
 
 ---
 
 ## Image and Container Runtime
 
-|               |                                                            |
-| ------------- | ---------------------------------------------------------- |
-| Image source  | Upstream `mostrop2p/mostro` Docker image, unmodified       |
-| Architectures | x86_64, aarch64                                            |
-| Entrypoint    | `mostrod -d /mostro` (data directory on the `main` volume) |
+One upstream image, consumed unmodified.
 
-The daemon runs as the image's non-root `mostrouser`. A root `prepare-runtime` one-shot takes ownership of the data volume before the daemon starts; the Lightning credentials are read straight off a read-only mount (see Dependencies).
+| Property      | Value                                     |
+| ------------- | ----------------------------------------- |
+| Image         | `mostrop2p/mostro`                        |
+| Architectures | x86_64, aarch64                           |
+| Command       | The daemon, pointed at the data directory |
+
+| Subcontainer | Purpose                                  |
+| ------------ | ---------------------------------------- |
+| `mostro-sub` | The only daemon — the one to `attach` to |
+
+One oneshot runs first, giving the data directory to the daemon's user.
 
 ## Volume and Data Layout
 
-| Path                    | Purpose                                                              |
-| ----------------------- | -------------------------------------------------------------------- |
-| `/mostro`               | The `main` volume — the daemon's data directory (read-write)         |
-| `/mostro/settings.toml` | Generated configuration, written by the package from StartOS actions |
-| `/mostro/mostro.db`     | Embedded SQLite database (orders, ratings, disputes)                 |
-| `/mnt/lnd`              | The LND dependency's `main` volume, mounted read-only                |
+One volume, plus a read-only view of LND's.
 
-## Installation and First-Run Flow
+| Volume            | Mount Point | Purpose                              |
+| ----------------- | ----------- | ------------------------------------ |
+| `main`            | `/mostro`   | The settings and the trade database  |
+| LND's `main` (ro) | `/mnt/lnd`  | LND's certificate and admin macaroon |
 
-- The package seeds `settings.toml` with defaults on install — there is no upstream config file to edit by hand.
-- Because `mostrod` cannot operate without a Nostr identity and at least one relay, installation reads the actual config and creates a separate **critical task** for each missing piece — **Set Nostr Key** and **Set Nostr Relays** — before the daemon will run usefully. A default relay is seeded, so on a fresh install typically only the key is required.
-- LND is a required dependency and must be installed and fully synced before Mostro is considered satisfied.
+| Path            | Written by | Holds                                      |
+| --------------- | ---------- | ------------------------------------------ |
+| `settings.toml` | Actions    | Everything, including the Nostr identity   |
+| `mostro.db`     | Mostro     | Orders, disputes, ratings, and message log |
 
-## Configuration Management
+**LND's credentials are read straight off the dependency mount**, not copied. The mount is idmapped so the files LND wrote as root are readable by Mostro's own user — which is what makes a read-only mount workable without a copy step that would then need re-running whenever LND rotated anything.
 
-All configuration is StartOS-managed: the package owns `settings.toml` and rewrites it from the values you submit through actions. There is no separate upstream configuration UI.
+## File Models
 
-| StartOS-Managed (via actions)                                                                                                           | Not Applicable                                                                  |
-| --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Lightning invoice/payment parameters, Nostr keys & relays, trading/business parameters, event-retention windows, anti-abuse bond policy | Mostro exposes no in-app settings UI; everything is driven from `settings.toml` |
+One model, and it covers the entire configuration.
 
-The LND credential paths and gRPC host in `settings.toml` are managed by the package and point at the read-only LND mount; you do not set them manually.
+| File            | Format | Modelled                | Written by         |
+| --------------- | ------ | ----------------------- | ------------------ |
+| `settings.toml` | TOML   | Yes — `FileHelper.toml` | Actions and `main` |
 
-## Network Access and Interfaces
+Every section of Mostro's configuration is typed, with each field defaulted so an incomplete or hand-damaged file is repaired on read rather than rejected: the Lightning parameters, the Nostr identity and relays, the instance's public profile and trading limits, the database location, the admin RPC, the data-retention windows, the price-feed providers, and the anti-abuse bond.
 
-**None.** Mostro exposes no inbound network interface. It is a Nostr/Lightning client: it opens only outbound connections — to Nostr relays and to LND — and traders interact with it entirely through shared Nostr relays, never by connecting to this service directly. Mostro's admin gRPC runs on `127.0.0.1:50051` (localhost) only, matching upstream's design (no authentication, never network-exposed); it is administered from the StartOS box.
+Three groups are **written by the package rather than the user**:
 
-## Actions
+- **LND's certificate and macaroon paths**, pinned to the dependency mount.
+- **LND's gRPC address**, resolved at start over the internal bridge. **When LND has not published its binding it is left unwritten** rather than defaulted, so the daemon fails its connection visibly; the reactive read heals it with one restart when the binding appears.
+- **The admin RPC**, fixed to loopback. It is Mostro's unauthenticated local admin channel, and pinning it is what keeps it off the network.
 
-All actions are visible (`enabled`) at any service status, grouped in the StartOS UI by area: **Nostr Settings** (key, relays), **Lightning**, and **Trading** (Mostro/expiration/anti-abuse-bond).
+The settings file is read reactively, so any action that changes it restarts the daemon.
 
-| Action                            | Purpose                                                                                          | Inputs                                              | Output                                  |
-| --------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------- | --------------------------------------- |
-| Configure Lightning Node Settings | Invoice expiry, hold-invoice CLTV delta, payment attempts/intervals                              | Numeric Lightning parameters                        | Writes `settings.toml`                  |
-| Set Nostr Key                     | Set the Nostr identity (nsec) the daemon signs and trades with                                   | `nsec` private key (masked)                         | Writes `settings.toml`; clears its task |
-| Set Nostr Relays                  | Manage the Nostr relays Mostro publishes to and reads from                                       | Add/remove list of `wss://`/`ws://` relay URLs (≥1) | Writes `settings.toml`; clears its task |
-| Configure Mostro Settings         | Trading and business logic (metadata, fees, order limits, transport, fiat currencies, price API) | Many trading parameters                             | Writes `settings.toml`                  |
-| Configure Event Expiration        | Retention windows for each Nostr event type                                                      | Per-event-kind day counts                           | Writes `settings.toml`                  |
-| Configure Anti-Abuse Bond         | Optional Lightning hold-invoice bonds to deter abusive takers/makers                             | Bond policy parameters                              | Writes `settings.toml`                  |
-
-## Backups and Restore
-
-The entire `main` volume is backed up — configuration and the SQLite database (order/rating/dispute history). On restore the daemon resumes from the restored data directory; LND connectivity is re-established from the restored settings.
-
-## Health Checks
-
-| Check         | Meaning                                                                                |
-| ------------- | -------------------------------------------------------------------------------------- |
-| Mostro Daemon | Succeeds once `mostrod` is up and its localhost admin RPC port (`50051`) is listening. |
+**The Nostr key is validated before it is stored.** The package decodes the bech32 itself and checks that it is a well-formed 32-byte `nsec`, because a mistyped key is otherwise accepted by the form and then crash-loops the daemon.
 
 ## Dependencies
 
-| Dependency | Required | Version                   | Health checks                          | Mount                                         | Purpose                                             |
-| ---------- | -------- | ------------------------- | -------------------------------------- | --------------------------------------------- | --------------------------------------------------- |
-| LND        | Yes      | recent LND (see manifest) | `sync-progress` (must be fully synced) | `main` volume mounted read-only at `/mnt/lnd` | Lightning node for hold-invoice escrow and payments |
+One, and it is required.
 
-The daemon reads LND's `tls.cert` and `admin.macaroon` directly off the read-only mount — no copy — with the mount idmapped so LND's root-owned (uid 0) credentials are readable as `mostrouser` (uid 1000). It connects to LND's gRPC endpoint over the StartOS LXC bridge; the address is resolved reactively from LND's published binding and pinned against LND's StartOS-issued TLS cert.
+| Dependency | Required | Health checks required | Mounted                         | Why                    |
+| ---------- | -------- | ---------------------- | ------------------------------- | ---------------------- |
+| LND        | Yes      | `sync-progress`        | `main`, read-only at `/mnt/lnd` | The escrow and payouts |
+
+**A synced LND is required, not merely a running one.** Mostro holds funds in hold invoices and settles them; an unsynced node cannot do that safely, so the dependency asks for the sync check specifically.
+
+**This package uses LND's admin macaroon**, which it needs to create hold invoices, settle and cancel them, and pay out. Anyone with control of this service has spending control of the node.
+
+`main` also checks the dependency itself at start and refuses to come up unsatisfied, rather than starting into a broken state.
+
+## Network Access and Interfaces
+
+**None.** `setInterfaces` returns an empty array: no port is bound and no address is published.
+
+That is not a limitation of the packaging — it is what Mostro is. Traders never connect to your instance; **everyone meets on shared Nostr relays**, and Mostro's only inbound channel is the messages it reads there. Its outbound connections are to those relays, to LND over the internal bridge, and to the price APIs.
+
+The admin gRPC is loopback-only and unauthenticated by upstream's design; the package pins it there so it cannot be exported by accident.
+
+## Installation and First-Run Flow
+
+Install seeds the settings file with defaults, then reads it back and raises a `critical` task for each thing still missing: a Nostr key, and at least one relay.
+
+**The service cannot start until both are set.** A `critical` task blocks startup, which is right here — a Mostro with no identity has nothing to sign with, and one with no relay has nowhere to publish.
+
+Both checks read the actual configuration rather than a "configured" flag, so a restore that already carries a valid key and relays raises nothing.
+
+Once running, the instance publishes its profile to its relays and starts accepting orders. **The relay set is what makes your instance findable**; the default is Mostro's own.
+
+## Actions
+
+Six actions, in three groups.
+
+### Nostr Settings
+
+#### Set Nostr Key
+
+The `nsec` that is this instance's identity.
+
+- **What it changes:** the key in the settings.
+- **Cost:** the daemon restarts.
+- **Rejected if malformed** — the bech32 checksum and the key length are both checked before anything is written.
+- **Changing it changes who your instance is.** Reputation and existing orders are tied to the old identity.
+
+#### Set Nostr Relays
+
+The relays this instance publishes to and reads from.
+
+- **What it changes:** the relay list.
+- **At least one is required**, and each is validated as a `ws://` or `wss://` URL in the handler as well as the form — the form's patterns do not apply to a programmatic submit.
+
+### Lightning
+
+#### Lightning Settings
+
+The invoice parameters: expiry windows, the hold-invoice CLTV delta, and the payment retry policy.
+
+- **These govern escrow behavior.** A short hold expiry can strand a trade mid-flight; the defaults are upstream's.
+
+### Trading
+
+#### Mostro Settings
+
+The instance's public profile — name, description, picture, website — plus its economics: the fee it charges, the routing-fee ceiling, order size limits, order and rating publication intervals, proof-of-work difficulty, the Nostr transport, the price API, the accepted fiat currencies, and the developer fee percentage.
+
+#### Expiration Settings
+
+How long orders, ratings, disputes, fee audit records, and direct messages are retained.
+
+#### Anti-Abuse Bond Settings
+
+The optional bond takers or makers must post, its size, whether it is slashed on a timeout, and how the payout is handled.
+
+- **Off by default.** Turning it on changes what counterparties must do to trade with you.
+
+## Tasks
+
+Two, both raised at install and both blocking.
+
+| Task             | Severity   | Raised when                     | Cleared when    |
+| ---------------- | ---------- | ------------------------------- | --------------- |
+| Set Nostr Key    | `critical` | No valid `nsec` in the settings | The action runs |
+| Set Nostr Relays | `critical` | No valid relay in the settings  | The action runs |
+
+They are raised independently, so an install that has one and not the other shows only the one it needs.
+
+## Health Checks
+
+One check, on the only daemon.
+
+| Check     | Displayed as    | Method                          |
+| --------- | --------------- | ------------------------------- |
+| `primary` | "Mostro Daemon" | The admin RPC port is listening |
+
+**It reports that the daemon started, not that it is trading.** Mostro binds its local admin RPC once it has come up; whether it is connected to its relays, whether LND is answering, and whether orders are being published are all invisible to this check and visible in the service logs.
+
+There is no interface to test, so there is nothing more to observe from outside.
+
+## Backups and Restore
+
+The `main` volume is copied wholesale — `sdk.Backups.ofVolumes('main')`. That is the settings file and the trade database: orders, disputes, ratings, and the message log.
+
+**The backup contains the Nostr private key**, in the settings file, in recoverable form. It is the instance's whole identity and its reputation, so the backup is as sensitive as the key itself.
+
+A restored instance comes back as the same Mostro to the network, with its history, and re-resolves LND's address on the new server. **Do not run the restored copy alongside the original** — two daemons signing as one identity on the same relays is not a supported configuration.
 
 ## Limitations and Differences
 
-1. **A Nostr key and relay are mandatory.** The daemon will not function until the Nostr key and at least one relay are set; separate critical tasks enforce each on first run.
-2. **LND must be fully synced.** The dependency gates on LND's `sync-progress` health check, so Mostro waits for a fully synced node rather than merely a running one.
-3. **The admin RPC is localhost-only.** Following upstream's design, Mostro's gRPC admin API has no authentication and is never network-exposed; administer the instance from the StartOS box. There is no off-box admin access.
-4. **No in-app configuration UI.** All settings are managed through StartOS actions that rewrite `settings.toml`.
-
-## What Is Unchanged from Upstream
-
-- The `mostrod` daemon, the trading/escrow protocol, hold-invoice mechanics, reputation system, and Nostr event formats behave exactly as upstream documents.
-- The configuration keys in `settings.toml` are upstream's own; StartOS only manages how the file is generated.
-- The admin gRPC API surface is upstream's.
-
-## Contributing
-
-See [CONTRIBUTING in the upstream project](https://github.com/MostroP2P/mostro) for the daemon, and the package repository for StartOS packaging changes.
+1. **No interfaces at all.** Everything reaches this service through Nostr relays.
+2. **The admin macaroon is required**, so control of this service is spending control of your node.
+3. **A synced LND is a hard requirement**, not just a running one.
+4. **The Nostr key cannot be generated here** — it is supplied by the user, and changing it discards the instance's reputation.
+5. **The backup holds the identity key.**
+6. **Price feeds are external HTTP APIs** and are contacted on a schedule, so the instance's traffic is not confined to Nostr and LND.
+7. **The admin RPC is unauthenticated** and is pinned to loopback for exactly that reason; it cannot be exported.
+8. **Mainnet only.** The macaroon path is pinned to Bitcoin mainnet.
 
 ---
 
@@ -124,16 +211,20 @@ See [CONTRIBUTING in the upstream project](https://github.com/MostroP2P/mostro) 
 
 ```yaml
 package_id: mostro
-architectures: [x86_64, aarch64]
-entrypoint: mostrod -d /mostro
+image: mostrop2p/mostro
+architectures:
+  - x86_64
+  - aarch64
+subcontainers:
+  - mostro-sub
 volumes:
-  main: /mostro
-mounts:
-  lnd_main: /mnt/lnd # read-only
-ports: none # no inbound interface; admin gRPC is localhost-only (127.0.0.1:50051)
+  main: /mostro # settings.toml + mostro.db; LND's main is read-only at /mnt/lnd (idmapped 0→1000)
+file_models:
+  - settings.toml # the entire configuration, including the nsec
+startos_managed_env_vars: [] # everything is settings.toml
 dependencies:
-  - lnd # required; health check: sync-progress
-config_management: file # settings.toml, written by package actions (no env vars)
+  - lnd # required, kind: running, healthChecks: [sync-progress], admin macaroon
+interfaces: {} # none declared — Mostro is reached through Nostr relays
 actions:
   - nostr-key
   - nostr-relays
@@ -141,5 +232,9 @@ actions:
   - mostro-settings
   - expiration-settings
   - anti-abuse-bond-settings
-action_groups: [Nostr Settings, Lightning, Trading]
+tasks:
+  - { action: nostr-key, severity: critical } # install only, raised from the actual config
+  - { action: nostr-relays, severity: critical } # install only, raised from the actual config
+health_checks:
+  - primary # displayed "Mostro Daemon"; only says the local admin RPC is bound
 ```
