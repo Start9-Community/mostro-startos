@@ -8,7 +8,7 @@ const natural = (defaultVal: number) =>
 const lightningSchema = z.object({
   lnd_cert_file: z.string().catch(lndCredPaths.cert),
   lnd_macaroon_file: z.string().catch(lndCredPaths.macaroon),
-  lnd_grpc_host: z.string().catch(lndCredPaths.grpcHost),
+  lnd_grpc_host: z.string().optional().catch(undefined),
   invoice_expiration_window: natural(3600),
   hold_invoice_cltv_delta: natural(144),
   hold_invoice_expiration_window: natural(300),
@@ -83,7 +83,9 @@ const priceProviderCurrencyApiSchema = z.object({
   url: z.string().catch('https://currency-api.pages.dev/v1'),
   fallback_urls: z
     .array(z.string())
-    .catch(['https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1']),
+    .catch([
+      'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1',
+    ]),
   except: z.array(z.string()).catch(['CUP', 'MLC']),
 })
 

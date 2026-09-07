@@ -69,16 +69,21 @@ function bech32Decode(str: string): { hrp: string; bytes: number[] } | null {
 export function isValidNsec(nsec: string): boolean {
   if (typeof nsec !== 'string') return false
   const decoded = bech32Decode(nsec.trim())
-  return decoded !== null && decoded.hrp === 'nsec' && decoded.bytes.length === 32
+  return (
+    decoded !== null && decoded.hrp === 'nsec' && decoded.bytes.length === 32
+  )
 }
 
 /** Read-only mount point for the LND dependency's data volume. */
 export const lndMount = '/mnt/lnd'
 
-/** Writable copies of LND TLS cert + admin macaroon (source mount is read-only). */
+/**
+ * LND TLS cert + admin macaroon, read directly off LND's idmapped readonly
+ * dependency mount (no copy). Main reconciles `lnd_grpc_host` to LND's gRPC
+ * bridge address reactively (`sdk.host.getBridgeAddress`); until it resolves the field
+ * is left unwritten rather than pointed at a placeholder.
+ */
 export const lndCredPaths = {
-  dir: '/mostro/lnd-creds',
-  cert: '/mostro/lnd-creds/tls.cert',
-  macaroon: '/mostro/lnd-creds/admin.macaroon',
-  grpcHost: 'https://lnd.startos:10009',
+  cert: `${lndMount}/tls.cert`,
+  macaroon: `${lndMount}/data/chain/bitcoin/mainnet/admin.macaroon`,
 } as const
