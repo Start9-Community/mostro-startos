@@ -17,19 +17,21 @@ Freshly scaffolded? Work the
 (or <https://docs.start9.com/packaging/new-package-checklist.html>) from top to bottom. It is a
 guide page, not a file in this repo — read it, don't copy it in.
 
-Work this package's `TODO.md` from top to bottom. Keep `README.md` (technical
-reference for an AI support or administering agent) and `instructions.md`
-(end-user docs) in sync with your changes.
+Keep `README.md` (technical reference for an AI support or administering agent) and
+`instructions.md` (end-user docs) in sync with your changes.
 
-**Bugs and feature requests are GitHub issues on this repo** — file them as you find them.
-Don't record work in `NOTES.md` or `PLAN.md`. What you verified, tried, and decided
-belongs in the commit message and the PR body.
+**Fix a defect you spot rather than reporting it** — you have the package open and the
+context to be sure. File **a GitHub issue on this repo** only when the call isn't yours to
+make: you can't pin the cause down, two defensible fixes exist, or it's too large to ride on
+the work in hand. An open issue is a report, not a queue — implement one when you're asked
+to or when it's labelled `Approved`, then close it with `Closes #<n>`.
+
+Don't record work in the repo instead: no `TODO.md`, no `NOTES.md`, no `PLAN.md`. What you
+verified, tried, and decided belongs in the commit message and the PR body.
 
 ## This repo
 
-- **Remotes: `origin` is MostroP2P (team); `upstream` is Start9-Community (PRs and registry).** After clone: `git remote add upstream https://github.com/Start9-Community/mostro-startos.git`. Push only to `origin`. Disable accidental pushes with `git remote set-url --push upstream DISABLE`.
-- **Ship packaging as a PR into Start9-Community, not only into MostroP2P.** Base repo `Start9-Community/mostro-startos`, base `master`, head `MostroP2P:<branch>`. GitHub's default Contribute button on this repo points the wrong way.
-- **After Start9 merges, fast-forward this repo from community.** `git fetch upstream && git merge --ff-only upstream/master` on `master` (same for `next`). Do not use GitHub "Sync fork" on Start9-Community — that would pull this parent into community without a PR.
+- **PRs target `Start9-Community/mostro-startos`, not its parent `MostroP2P/mostro-startos`.** CI, the registry release and `manifest.packageRepo` all name the community fork, but GitHub's Contribute button proposes the parent. The parent fast-forwards from community after a merge; never "Sync fork" the community repo, which would take the parent's `master` in unreviewed.
 - **Relay URLs are validated in the handler as well as the form.** `List.text` `patterns` are enforced by the UI only; a programmatic submit bypasses them and a bad relay reaches the config.
 - **Import LND's host id and port from `lnd-startos/startos/interfaces`** rather than hardcoding, so a change on LND's side is a compile error here.
 - **The LND mount is idmapped `0 → 1000`** so `mostrouser` can read credentials LND wrote as root, straight off the read-only mount. Don't replace it with a copy step — a copy goes stale when LND rotates its cert.
