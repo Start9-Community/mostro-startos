@@ -5,6 +5,7 @@ import { nostrRelays } from './nostr-settings/nostrRelays'
 import { antiAbuseBondSettings } from './trading/antiAbuseBondSettings'
 import { expirationSettings } from './trading/expirationSettings'
 import { mostroSettings } from './trading/mostroSettings'
+import { priceSettings } from './trading/priceSettings'
 
 export const actions = sdk.Actions.of()
   .addAction(nostrKey)
@@ -13,3 +14,4 @@ export const actions = sdk.Actions.of()
   .addAction(mostroSettings)
   .addAction(expirationSettings)
   .addAction(antiAbuseBondSettings)
+  .addAction(priceSettings)
