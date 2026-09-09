@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="icon.png" alt="Mostro Logo" width="21%">
+  <img src="icon.svg" alt="Mostro Logo" width="21%">
 </p>
 
 # Mostro on StartOS

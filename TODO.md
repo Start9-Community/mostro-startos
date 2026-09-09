@@ -1,0 +1,5 @@
+# TODO
+
+- [ ] **Mostro v0.18.7 settings (own PR, after this docs/layout change).** Image `mostrop2p/mostro:v0.18.7` is on Docker Hub (amd64 + arm64). Pin `dockerTag` and bump `current.ts` to `0.18.7:0` (empty `up` — edit in place). Do not mix with the SDK 2.0.10 bump. Do not enable `[cashu]` (mutually exclusive with LND).
+- [ ] **Extend StartOS settings to match 0.18.7** (`startos/fileModels/settings.ts` + Lightning / Mostro actions). New Lightning keys and upstream defaults: `max_final_cltv_expiry_delta` (144), `escrow_deadline_margin_blocks` (24), `max_inflight_payouts` (100), `max_inflight_payouts_per_destination` (10), `payment_cltv_limit` (1008), `allow_node_change` (false — disaster recovery only; do not expose as a casual toggle). Change `transport` `.catch()` / action default from `gift-wrap` to `nip44` (gift-wrap is opt-in until v0.19); existing `gift-wrap` on disk must survive `merge()`. Leave `rpc.auth_token` unset. Optional later: `price.providers.nostr`.
+- [ ] After that bump: `make x86 install`, complete Set Nostr Key, confirm LND sync, `start-cli package logs mostro -f`. Compile is not enough.
