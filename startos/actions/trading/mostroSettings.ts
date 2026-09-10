@@ -4,8 +4,6 @@ import { sdk } from '../../sdk'
 
 const { InputSpec, Value } = sdk
 
-const DEFAULT_FIAT_CURRENCIES = ['USD', 'EUR', 'ARS', 'CUP']
-
 function parseFiatCurrencyList(value: string): string[] {
   if (!value?.trim()) {
     return []
@@ -143,17 +141,6 @@ export const inputSpec = InputSpec.of({
     min: 0,
     max: 40,
   }),
-  transport: Value.select({
-    name: i18n('Wire Transport'),
-    description: i18n(
-      'Protocol transport: gift-wrap (v1, deprecated) or nip44 (v2)',
-    ),
-    default: 'gift-wrap',
-    values: {
-      'gift-wrap': i18n('gift-wrap (protocol v1)'),
-      nip44: i18n('nip44 (protocol v2)'),
-    },
-  }),
   publish_mostro_info_interval: Value.number({
     name: i18n('Publish Mostro Info Interval'),
     description: i18n('Publish mostro info interval in seconds'),
@@ -178,7 +165,7 @@ export const inputSpec = InputSpec.of({
       'Comma-separated fiat currency codes (e.g., USD,EUR,ARS,CUP). Leave empty to accept all fiat currencies.',
     ),
     placeholder: 'USD,EUR,ARS,CUP',
-    default: 'USD,EUR,ARS,CUP',
+    default: '',
     required: false,
   }),
   max_orders_per_response: Value.number({
@@ -236,13 +223,12 @@ export const mostroSettings = sdk.Action.withInput(
         mostroConfig?.user_rates_sent_interval_seconds ?? 3600,
       publish_relays_interval: mostroConfig?.publish_relays_interval ?? 60,
       pow: mostroConfig?.pow ?? 0,
-      transport: mostroConfig?.transport ?? 'gift-wrap',
       publish_mostro_info_interval:
         mostroConfig?.publish_mostro_info_interval ?? 300,
       bitcoin_price_api_url:
         mostroConfig?.bitcoin_price_api_url ?? 'https://api.yadio.io',
       fiat_currencies_accepted: (
-        mostroConfig?.fiat_currencies_accepted ?? DEFAULT_FIAT_CURRENCIES
+        mostroConfig?.fiat_currencies_accepted ?? []
       ).join(','),
       max_orders_per_response: mostroConfig?.max_orders_per_response ?? 10,
       dev_fee_percentage: mostroConfig?.dev_fee_percentage ?? 0.3,
@@ -267,7 +253,6 @@ export const mostroSettings = sdk.Action.withInput(
           input.user_rates_sent_interval_seconds,
         publish_relays_interval: input.publish_relays_interval,
         pow: input.pow,
-        transport: input.transport,
         publish_mostro_info_interval: input.publish_mostro_info_interval,
         bitcoin_price_api_url: input.bitcoin_price_api_url,
         fiat_currencies_accepted: parseFiatCurrencyList(
