@@ -33,7 +33,11 @@ export const main = sdk.setupMain(async ({ effects }) => {
       lnd_cert_file: lndCredPaths.cert,
       lnd_macaroon_file: lndCredPaths.macaroon,
       ...(lndBridge ? { lnd_grpc_host: `https://${lndBridge}` } : {}),
+      allow_node_change: false,
     },
+    // Protocol v1 gift-wrap is gone; pin nip44 so a leftover setting cannot
+    // put the daemon back on v1.
+    mostro: { transport: 'nip44' },
     // Keep the admin RPC fixed on at localhost — it's Mostro's local-only admin
     // channel, never network-exposed.
     rpc: { enabled: true, listen_address: '127.0.0.1', port: 50051 },

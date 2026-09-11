@@ -1,4 +1,7 @@
-import { daemon_settings } from '../../fileModels/settings'
+import {
+  daemon_settings,
+  DEFAULT_NOSTR_RELAYS,
+} from '../../fileModels/settings'
 import { i18n } from '../../i18n'
 import { sdk } from '../../sdk'
 
@@ -12,7 +15,7 @@ export const inputSpec = InputSpec.of({
         description: i18n(
           'Nostr relay URLs that Mostro publishes orders to and reads from. At least one is required.',
         ),
-        default: ['wss://relay.mostro.network'],
+        default: [...DEFAULT_NOSTR_RELAYS],
         minLength: 1,
       },
       {
@@ -46,7 +49,7 @@ export const nostrRelays = sdk.Action.withInput(
 
   async ({ effects }) => {
     const relays = await daemon_settings.read((s) => s?.nostr?.relays).once()
-    return { relays: relays ?? ['wss://relay.mostro.network'] }
+    return { relays: relays ?? [...DEFAULT_NOSTR_RELAYS] }
   },
 
   async ({ effects, input }) => {

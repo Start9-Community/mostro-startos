@@ -15,8 +15,8 @@ Installing this runs **your own Mostro instance** — the `mostrod` daemon that 
 
 1. **Install and sync LND.** Mostro requires LND and waits until it is fully synced. Do this first.
 2. **Set your Nostr key.** On install you'll see a required **Set Nostr Key** task — paste your Nostr private key (`nsec…`). This key _is_ your instance's identity; its public form (`npub`) is how traders find and address your instance.
-3. **Relays (usually leave as-is).** A default relay is provided, so you typically don't need to touch this. Use **Set Nostr Relays** to add your own relays or point at a relay you run.
-4. **Trading parameters (optional).** **Configure Mostro Settings** sets your instance name/metadata, fees, order limits, and accepted fiat currencies; **Configure Lightning Node Settings** tunes invoice and payment behavior; **Configure Event Expiration** and **Configure Anti-Abuse Bond** adjust event retention and trade bonding. The defaults are sensible to start.
+3. **Relays (usually leave as-is).** Three default relays are provided (`wss://relay.mostro.network`, `wss://mostro-p2p.tech`, `wss://relay.shadowbip.com`), so you typically don't need to touch this. Use **Set Nostr Relays** to add your own relays or point at a relay you run.
+4. **Trading parameters (optional).** **Configure Mostro Settings** sets your instance name/metadata, fees, order limits, and accepted fiat currencies (leave empty to accept all). The wire protocol is **nip44** only. **Configure Lightning Node Settings** tunes invoice, payment, and payout-safety limits; **Configure Event Expiration** and **Configure Anti-Abuse Bond** adjust event retention and trade bonding. **Configure Price Providers** switches on the multi-source Bitcoin/fiat feeds (Yadio, CoinGecko, currency-api, Blockchain.info; El Toque and Nostr prices stay off until you add a token or trusted node). The defaults are sensible to start.
 5. **Start Mostro.** Once the Nostr key is set and LND is synced, start the service. Changing a setting afterward restarts the daemon automatically so it picks up the new config — no manual restart needed.
 
 ## Using Mostro

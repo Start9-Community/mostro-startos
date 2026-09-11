@@ -80,6 +80,8 @@ Three groups are **written by the package rather than the user**:
 - **LND's certificate and macaroon paths**, pinned to the dependency mount.
 - **LND's gRPC address**, resolved at start over the internal bridge. **When LND has not published its binding it is left unwritten** rather than defaulted, so the daemon fails its connection visibly; the reactive read heals it with one restart when the binding appears.
 - **The admin RPC**, fixed to loopback. It is Mostro's unauthenticated local admin channel, and pinning it is what keeps it off the network.
+- **`allow_node_change`**, pinned false. Turning it on with open escrow is unsafe; it is not a user toggle.
+- **`transport`**, pinned to `nip44`. Protocol v1 gift-wrap is not offered.
 
 The settings file is read reactively, so any action that changes it restarts the daemon.
 
@@ -115,7 +117,7 @@ Install seeds the settings file with defaults, then reads it back and raises a `
 
 Both checks read the actual configuration rather than a "configured" flag, so a restore that already carries a valid key and relays raises nothing.
 
-Once running, the instance publishes its profile to its relays and starts accepting orders. **The relay set is what makes your instance findable**; the default is Mostro's own.
+Once running, the instance publishes its profile to its relays and starts accepting orders. **The relay set is what makes your instance findable**; the defaults are `wss://relay.mostro.network`, `wss://mostro-p2p.tech`, and `wss://relay.shadowbip.com`.
 
 ## Actions
 
@@ -137,21 +139,27 @@ The `nsec` that is this instance's identity.
 The relays this instance publishes to and reads from.
 
 - **What it changes:** the relay list.
+- **Defaults are three relays** (`wss://relay.mostro.network`, `wss://mostro-p2p.tech`, `wss://relay.shadowbip.com`). An existing list is left as-is.
 - **At least one is required**, and each is validated as a `ws://` or `wss://` URL in the handler as well as the form — the form's patterns do not apply to a programmatic submit.
 
 ### Lightning
 
 #### Lightning Settings
 
-The invoice parameters: expiry windows, the hold-invoice CLTV delta, and the payment retry policy.
+The invoice parameters: expiry windows, the hold-invoice CLTV delta, the payment retry policy, and the payout-safety limits (final CLTV cap, escrow deadline margin, in-flight payout ceilings, route CLTV limit).
 
 - **These govern escrow behavior.** A short hold expiry can strand a trade mid-flight; the defaults are upstream's.
+- **`allow_node_change` is pinned off** by the package (disaster recovery only) and is not on this form.
 
 ### Trading
 
 #### Mostro Settings
 
-The instance's public profile — name, description, picture, website — plus its economics: the fee it charges, the routing-fee ceiling, order size limits, order and rating publication intervals, proof-of-work difficulty, the Nostr transport, the price API, the accepted fiat currencies, and the developer fee percentage.
+The instance's public profile — name, description, picture, website — plus its economics: the fee it charges, the routing-fee ceiling, order size limits, order and rating publication intervals, proof-of-work difficulty, the legacy price API URL, the accepted fiat currencies, and the developer fee percentage.
+
+- **`transport` is pinned to nip44** (protocol v2) and is not on this form. Gift-wrap is not available.
+- **Fiat currencies default to empty** (accept all). A comma-separated list still restricts which codes this instance will take.
+- **`bitcoin_price_api_url` is the legacy single-source Yadio URL.** Prefer **Configure Price Providers** for the live multi-source block.
 
 #### Expiration Settings
 
@@ -162,6 +170,15 @@ How long orders, ratings, disputes, fee audit records, and direct messages are r
 The optional bond takers or makers must post, its size, whether it is slashed on a timeout, and how the payout is handled.
 
 - **Off by default.** Turning it on changes what counterparties must do to trade with you.
+
+#### Price Provider Settings
+
+Poll cadence, outlier and circuit-breaker limits, whether aggregated rates are published to Nostr, and each HTTP/Nostr source (Yadio, CoinGecko, currency-api, Blockchain.info, El Toque, trusted Mostro nodes).
+
+- **Saving this form writes the `[price]` block** and takes the instance off the legacy single-source synthesis.
+- **El Toque stays off** until you have a token and have confirmed the API; enabling it without a token is rejected.
+- **Nostr prices stay off** until at least one trusted 64-character hex pubkey is listed.
+- **CoinGecko keys and El Toque tokens are stored in `settings.toml`**, so they are in the backup.
 
 ## Tasks
 
@@ -190,7 +207,7 @@ There is no interface to test, so there is nothing more to observe from outside.
 
 The `main` volume is copied wholesale — `sdk.Backups.ofVolumes('main')`. That is the settings file and the trade database: orders, disputes, ratings, and the message log.
 
-**The backup contains the Nostr private key**, in the settings file, in recoverable form. It is the instance's whole identity and its reputation, so the backup is as sensitive as the key itself.
+**The backup contains the Nostr private key**, in the settings file, in recoverable form. It is the instance's whole identity and its reputation, so the backup is as sensitive as the key itself. CoinGecko API keys and El Toque tokens, if you set them, are in the same file.
 
 A restored instance comes back as the same Mostro to the network, with its history, and re-resolves LND's address on the new server. **Do not run the restored copy alongside the original** — two daemons signing as one identity on the same relays is not a supported configuration.
 
@@ -201,9 +218,11 @@ A restored instance comes back as the same Mostro to the network, with its histo
 3. **A synced LND is a hard requirement**, not just a running one.
 4. **The Nostr key cannot be generated here** — it is supplied by the user, and changing it discards the instance's reputation.
 5. **The backup holds the identity key.**
-6. **Price feeds are external HTTP APIs** and are contacted on a schedule, so the instance's traffic is not confined to Nostr and LND.
+6. **Price feeds are external HTTP APIs** (and optionally trusted Mostro nodes over Nostr) and are contacted on a schedule, so the instance's traffic is not confined to LND.
 7. **The admin RPC is unauthenticated** and is pinned to loopback for exactly that reason; it cannot be exported.
 8. **Mainnet only.** The macaroon path is pinned to Bitcoin mainnet.
+9. **Cashu escrow is not packaged.** Upstream can run without LND in Cashu mode; this package requires LND and leaves `[cashu]` unset.
+10. **Changing Lightning node identity with open escrow is blocked.** `allow_node_change` is pinned false.
 
 ---
 
@@ -232,6 +251,7 @@ actions:
   - mostro-settings
   - expiration-settings
   - anti-abuse-bond-settings
+  - price-settings
 tasks:
   - { action: nostr-key, severity: critical } # install only, raised from the actual config
   - { action: nostr-relays, severity: critical } # install only, raised from the actual config
