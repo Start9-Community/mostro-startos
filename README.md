@@ -75,7 +75,7 @@ One model, and it covers the entire configuration.
 
 Every section of Mostro's configuration is typed, with each field defaulted so an incomplete or hand-damaged file is repaired on read rather than rejected: the Lightning parameters, the Nostr identity and relays, the instance's public profile and trading limits, the database location, the admin RPC, the data-retention windows, the price-feed providers, and the anti-abuse bond.
 
-Three groups are **written by the package rather than the user**:
+Five settings are **written by the package rather than the user**:
 
 - **LND's certificate and macaroon paths**, pinned to the dependency mount.
 - **LND's gRPC address**, resolved at start over the internal bridge. **When LND has not published its binding it is left unwritten** rather than defaulted, so the daemon fails its connection visibly; the reactive read heals it with one restart when the binding appears.
@@ -121,7 +121,7 @@ Once running, the instance publishes its profile to its relays and starts accept
 
 ## Actions
 
-Six actions, in three groups.
+Seven actions, in three groups.
 
 ### Nostr Settings
 
@@ -159,7 +159,7 @@ The instance's public profile — name, description, picture, website — plus i
 
 - **`transport` is pinned to nip44** (protocol v2) and is not on this form. Gift-wrap is not available.
 - **Fiat currencies default to empty** (accept all). A comma-separated list still restricts which codes this instance will take.
-- **`bitcoin_price_api_url` is the legacy single-source Yadio URL.** Prefer **Configure Price Providers** for the live multi-source block.
+- **`bitcoin_price_api_url` is upstream's deprecated single-source URL** and is ignored whenever a `[price]` block is present, which on this package is always; set the Yadio URL in **Configure Price Providers** instead.
 
 #### Expiration Settings
 
@@ -175,7 +175,7 @@ The optional bond takers or makers must post, its size, whether it is slashed on
 
 Poll cadence, outlier and circuit-breaker limits, whether aggregated rates are published to Nostr, and each HTTP/Nostr source (Yadio, CoinGecko, currency-api, Blockchain.info, El Toque, trusted Mostro nodes).
 
-- **Saving this form writes the `[price]` block** and takes the instance off the legacy single-source synthesis.
+- **The `[price]` block is always present.** The package writes it from defaults on every start, so the legacy single-source synthesis never runs; this form only changes its values.
 - **El Toque stays off** until you have a token and have confirmed the API; enabling it without a token is rejected.
 - **Nostr prices stay off** until at least one trusted 64-character hex pubkey is listed.
 - **CoinGecko keys and El Toque tokens are stored in `settings.toml`**, so they are in the backup.
