@@ -188,6 +188,15 @@ export const inputSpec = InputSpec.of({
     min: 0,
     max: 1,
   }),
+  serbero_pubkey: Value.text({
+    name: i18n('Serbero Pubkey'),
+    description: i18n(
+      'Optional pubkey (npub or hex) of your Serbero dispute assistant. Leave empty if you do not run one. Mostro registers it as a read-only solver and announces it in the info event; it refuses to start if the key is a write solver, a non-solver user, or the node itself',
+    ),
+    placeholder: 'npub1...',
+    default: '',
+    required: false,
+  }),
 })
 
 export const mostroSettings = sdk.Action.withInput(
@@ -232,6 +241,7 @@ export const mostroSettings = sdk.Action.withInput(
       ).join(','),
       max_orders_per_response: mostroConfig?.max_orders_per_response ?? 10,
       dev_fee_percentage: mostroConfig?.dev_fee_percentage ?? 0.3,
+      serbero_pubkey: mostroConfig?.serbero_pubkey ?? '',
     }
   },
 
@@ -260,6 +270,7 @@ export const mostroSettings = sdk.Action.withInput(
         ),
         max_orders_per_response: input.max_orders_per_response,
         dev_fee_percentage: input.dev_fee_percentage,
+        serbero_pubkey: (input.serbero_pubkey ?? '').trim(),
       },
     })
   },

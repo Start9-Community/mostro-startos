@@ -179,6 +179,8 @@ const dict = {
   'Enable Nostr prices only after adding at least one trusted node pubkey.': 201,
   'Maker Bond Payment Timeout': 202,
   'Seconds a maker has to pay the maker bond (apply_to = make or both). Past it the unpublished order expires': 203,
+  'Serbero Pubkey': 204,
+  'Optional pubkey (npub or hex) of your Serbero dispute assistant. Leave empty if you do not run one. Mostro registers it as a read-only solver and announces it in the info event; it refuses to start if the key is a write solver, a non-solver user, or the node itself': 205,
 } as const
 
 /**

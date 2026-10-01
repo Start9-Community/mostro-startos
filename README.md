@@ -160,6 +160,7 @@ The instance's public profile — name, description, picture, website — plus i
 - **`transport` is pinned to nip44** (protocol v2) and is not on this form. Protocol v1 gift-wrap was removed upstream.
 - **Fiat currencies default to empty** (accept all). A comma-separated list still restricts which codes this instance will take.
 - **`bitcoin_price_api_url` is upstream's deprecated single-source URL** and is ignored whenever a `[price]` block is present, which on this package is always; set the Yadio URL in **Configure Price Providers** instead.
+- **`serbero_pubkey` is optional.** If you run a [Serbero](https://github.com/MostroP2P/serbero) dispute assistant, put its npub or hex here; leave empty otherwise. Mostro registers it as a read-only solver at boot and announces it in the info event.
 
 #### Expiration Settings
 

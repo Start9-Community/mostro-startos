@@ -16,14 +16,14 @@ Mostro is packaged as a pre-built Docker image from Docker Hub.
 - Confirm multi-arch support (`amd64`, `arm64`) before pinning:
 
   ```bash
-  docker manifest inspect mostrop2p/mostro:v0.19.0 \
+  docker manifest inspect mostrop2p/mostro:v0.19.1 \
     | jq -r '.manifests[].platform | "\(.architecture)/\(.os)"'
   ```
 
 ## Applying the bump
 
-1. Update `dockerTag` in `startos/manifest/index.ts` (e.g. `mostrop2p/mostro:v0.19.0`)
-2. Edit `startos/versions/current.ts` — bump `version` to match upstream semver without the `v`, resetting the downstream revision (e.g. upstream `v0.19.0` → `0.19.0:0`)
+1. Update `dockerTag` in `startos/manifest/index.ts` (e.g. `mostrop2p/mostro:v0.19.1`)
+2. Edit `startos/versions/current.ts` — bump `version` to match upstream semver without the `v`, resetting the downstream revision (e.g. upstream `v0.19.1` → `0.19.1:0`)
 3. If the bump requires a migration, rename the old `current.ts` to `vX.Y.Z_N.ts`, add it to `other[]` in `startos/versions/index.ts`, then write the new `current.ts`
 4. Update release notes in `current.ts` (all locales)
 5. Build and test: `make clean x86 install`

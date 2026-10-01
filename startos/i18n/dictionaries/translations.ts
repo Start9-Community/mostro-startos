@@ -180,6 +180,8 @@ export default {
     201: 'Habilita precios Nostr solo después de añadir al menos una clave pública de nodo de confianza.',
     202: 'Tiempo de pago de la fianza del maker',
     203: 'Segundos que tiene un maker para pagar la fianza del maker (apply_to = make o both). Pasado ese tiempo, la orden no publicada expira',
+    204: 'Clave pública de Serbero',
+    205: 'Clave pública opcional (npub o hex) de tu asistente de disputas Serbero. Déjala vacía si no ejecutas uno. Mostro lo registra como solver de solo lectura y lo anuncia en el evento de información; se niega a arrancar si la clave es un solver de escritura, un usuario que no es solver, o el propio nodo',
   },
   de_DE: {
     0: 'Starte Mostro!',
@@ -360,6 +362,8 @@ export default {
     201: 'Nostr-Preise erst aktivieren, nachdem mindestens ein vertrauenswürdiger Knoten-Pubkey hinzugefügt wurde.',
     202: 'Maker-Bond-Zahlungs-Timeout',
     203: 'Sekunden, die ein Maker hat, um den Maker-Bond zu zahlen (apply_to = make oder both). Danach läuft die unveröffentlichte Order ab',
+    204: 'Serbero-Pubkey',
+    205: 'Optionale Pubkey (npub oder hex) deines Serbero-Streitassistenten. Leer lassen, wenn du keinen betreibst. Mostro registriert sie als schreibgeschützten Solver und kündigt sie im Info-Event an; der Start wird verweigert, wenn der Schlüssel ein Schreib-Solver, ein Nicht-Solver oder der Knoten selbst ist',
   },
   pl_PL: {
     0: 'Uruchamianie Mostro!',
@@ -540,6 +544,8 @@ export default {
     201: 'Włącz ceny Nostr dopiero po dodaniu co najmniej jednego klucza publicznego zaufanego węzła.',
     202: 'Timeout płatności kaucji maker',
     203: 'Sekundy, jakie maker ma na opłacenie kaucji maker (apply_to = make lub both). Po tym czasie nieopublikowane zlecenie wygasa',
+    204: 'Klucz publiczny Serbero',
+    205: 'Opcjonalny klucz publiczny (npub lub hex) asystenta sporów Serbero. Pozostaw puste, jeśli go nie uruchamiasz. Mostro rejestruje go jako solver tylko do odczytu i ogłasza w zdarzeniu info; odmawia startu, jeśli klucz jest solverem zapisu, użytkownikiem niebędącym solverem lub samym węzłem',
   },
   fr_FR: {
     0: 'Démarrage de Mostro !',
@@ -720,5 +726,7 @@ export default {
     201: 'N’activez les prix Nostr qu’après avoir ajouté au moins une clé publique de nœud de confiance.',
     202: 'Délai de paiement de la caution maker',
     203: 'Secondes dont dispose un maker pour payer la caution maker (apply_to = make ou both). Passé ce délai, l’ordre non publié expire',
+    204: 'Clé publique Serbero',
+    205: 'Clé publique optionnelle (npub ou hex) de votre assistant de litiges Serbero. Laissez vide si vous n’en exécutez pas. Mostro l’enregistre comme solver en lecture seule et l’annonce dans l’événement d’info ; le démarrage est refusé si la clé est un solver en écriture, un utilisateur non-solver, ou le nœud lui-même',
   },
 } satisfies Record<string, LangDict>

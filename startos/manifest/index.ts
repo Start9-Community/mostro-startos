@@ -14,7 +14,7 @@ export const manifest = setupManifest({
   images: {
     mostro: {
       source: {
-        dockerTag: 'mostrop2p/mostro:v0.19.0',
+        dockerTag: 'mostrop2p/mostro:v0.19.1',
       },
       arch: ['x86_64', 'aarch64'],
     },

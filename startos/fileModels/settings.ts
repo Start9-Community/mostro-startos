@@ -58,6 +58,8 @@ const mostroSchema = z.object({
   fiat_currencies_accepted: z.array(z.string()).catch([]),
   max_orders_per_response: natural(10),
   dev_fee_percentage: z.number().catch(0.3),
+  // Optional Serbero dispute-assistant pubkey (npub or hex). Blank = none.
+  serbero_pubkey: z.string().catch(''),
 })
 
 const databaseSchema = z.object({
