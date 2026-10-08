@@ -11,7 +11,7 @@ export const inputSpec = InputSpec.of({
   enabled: Value.select({
     name: i18n('Anti-Abuse Bond Enabled'),
     description: i18n(
-      'Require a Lightning hold-invoice bond from takers and/or makers (opt-in)',
+      '- Enabled: the sides chosen in Apply Bond To lock a Lightning hold-invoice bond when they take or create an order; it is released unless it is slashed\n- Disabled: no bond is required and nothing is slashed',
     ),
     default: 'false',
     values: {
@@ -22,7 +22,7 @@ export const inputSpec = InputSpec.of({
   amount_pct: Value.number({
     name: i18n('Bond Amount Percentage'),
     description: i18n(
-      'Bond = max(amount_pct × order_amount_sats, base_amount_sats). Unitless fraction (0.01 = 1%)',
+      'Bond size as a fraction of the order amount (0.01 = 1%). The bond is this share or Bond Base Amount, whichever is larger.',
     ),
     default: 0.01,
     required: true,
@@ -32,7 +32,9 @@ export const inputSpec = InputSpec.of({
   }),
   base_amount_sats: Value.number({
     name: i18n('Bond Base Amount (sats)'),
-    description: i18n('Minimum bond floor in satoshis'),
+    description: i18n(
+      'Smallest bond, in satoshis, so that small orders still carry a meaningful bond.',
+    ),
     default: 1000,
     required: true,
     integer: true,
@@ -41,7 +43,9 @@ export const inputSpec = InputSpec.of({
   }),
   apply_to: Value.select({
     name: i18n('Apply Bond To'),
-    description: i18n('Which order side must post the bond'),
+    description: i18n(
+      '- Takers only: the taker locks a bond when taking an order\n- Makers only: the maker locks a bond when creating an order\n- Both takers and makers: each side locks one',
+    ),
     default: 'take',
     values: {
       take: i18n('Takers only'),
@@ -51,7 +55,9 @@ export const inputSpec = InputSpec.of({
   }),
   slash_on_waiting_timeout: Value.select({
     name: i18n('Slash On Waiting Timeout'),
-    description: i18n('Slash the bond when a waiting timeout occurs'),
+    description: i18n(
+      '- Enabled: a bonded party who lets a trade step time out loses the bond; a cancel before the timeout still releases it\n- Disabled: a bond is slashed only when a dispute solver directs it',
+    ),
     default: 'false',
     values: {
       true: i18n('Enabled'),
@@ -82,7 +88,9 @@ export const inputSpec = InputSpec.of({
   }),
   payout_max_retries: Value.number({
     name: i18n('Payout Max Retries'),
-    description: i18n('Maximum payout retry attempts'),
+    description: i18n(
+      'How many times Mostro retries paying a slashed bond share once the winner has sent an invoice.',
+    ),
     default: 5,
     required: true,
     integer: true,
@@ -103,7 +111,7 @@ export const inputSpec = InputSpec.of({
   maker_bond_payment_timeout_seconds: Value.number({
     name: i18n('Maker Bond Payment Timeout'),
     description: i18n(
-      'Seconds a maker has to pay the maker bond (apply_to = make or both). Past it the unpublished order expires',
+      'Seconds a maker has to pay the bond when bonds apply to makers. Past it the unpublished order expires.',
     ),
     default: defaultMakerBondPaymentTimeoutSeconds,
     required: true,

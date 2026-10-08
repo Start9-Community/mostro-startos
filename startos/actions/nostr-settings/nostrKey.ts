@@ -44,7 +44,9 @@ export const nostrKey = sdk.Action.withInput(
   async ({ effects, input }) => {
     if (!isValidNsec(input.nsec_privkey)) {
       throw new Error(
-        'Invalid Nostr private key format. Please provide a valid nsec1... key.',
+        i18n(
+          'Invalid Nostr private key format. Please provide a valid nsec1... key.',
+        ),
       )
     }
 

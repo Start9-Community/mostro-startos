@@ -19,7 +19,9 @@ export const inputSpec = InputSpec.of({
   }),
   hold_invoice_cltv_delta: Value.number({
     name: i18n('Hold Invoice CLTV Delta'),
-    description: i18n('Hold invoice cltv delta (expiration time in blocks)'),
+    description: i18n(
+      "Expiry, in blocks, of the hold invoice that keeps the seller's sats in escrow (144 blocks is about one day). A trade still open as it runs out is canceled or sent to dispute; see Escrow Deadline Margin.",
+    ),
     default: 144,
     required: true,
     integer: true,
@@ -39,7 +41,9 @@ export const inputSpec = InputSpec.of({
   }),
   payment_attempts: Value.number({
     name: i18n('Payment Attempts'),
-    description: i18n('Retries for failed payments'),
+    description: i18n(
+      'How many times Mostro retries a payment to a user after it fails.',
+    ),
     default: 3,
     required: true,
     integer: true,
@@ -48,7 +52,9 @@ export const inputSpec = InputSpec.of({
   }),
   payment_retries_interval: Value.number({
     name: i18n('Payment Retries Interval'),
-    description: i18n('Retries interval for failed payments in seconds'),
+    description: i18n(
+      'Seconds Mostro waits between retries of a failed payment.',
+    ),
     default: 60,
     required: true,
     integer: true,
@@ -118,7 +124,7 @@ export const lnSettings = sdk.Action.withInput(
   async () => ({
     name: i18n('Configure Lightning Node Settings'),
     description: i18n(
-      'Configure Lightning node connection settings for Mostro',
+      'Set how Mostro handles invoices, hold-invoice escrow and payouts through LND',
     ),
     warning: null,
     allowedStatuses: 'any',

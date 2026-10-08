@@ -17,16 +17,7 @@ export const manifest = setupManifest({
         dockerTag: 'mostrop2p/mostro:v0.19.1',
       },
       arch: ['x86_64', 'aarch64'],
-    },
-  },
-  dependencies: {
-    lnd: {
-      description: 'Lightning node',
-      optional: false,
-      metadata: {
-        title: 'LND',
-        icon: 'https://raw.githubusercontent.com/Start9Labs/lnd-startos/refs/heads/master/icon.svg',
-      },
+      emulateMissing: false,
     },
   },
 })

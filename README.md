@@ -140,7 +140,7 @@ The relays this instance publishes to and reads from.
 
 - **What it changes:** the relay list.
 - **Defaults are three relays** (`wss://relay.mostro.network`, `wss://mostro-p2p.tech`, `wss://relay.shadowbip.com`). An existing list is left as-is.
-- **At least one is required**, and each is validated as a `ws://` or `wss://` URL in the handler as well as the form — the form's patterns do not apply to a programmatic submit.
+- **At least one is required**, and each must be a `ws://` or `wss://` URL.
 
 ### Lightning
 
@@ -155,12 +155,12 @@ The invoice parameters: expiry windows, the hold-invoice CLTV delta, the payment
 
 #### Mostro Settings
 
-The instance's public profile — name, description, picture, website — plus its economics: the fee it charges, the routing-fee ceiling, order size limits, order and rating publication intervals, proof-of-work difficulty, the legacy price API URL, the accepted fiat currencies, and the developer fee percentage.
+The instance's public profile — name, description, picture, website — plus its economics: the fee it charges, the routing-fee ceiling, order size limits, order and rating publication intervals, proof-of-work difficulty, the accepted fiat currencies, and the developer fee percentage.
 
 - **`transport` is pinned to nip44** (protocol v2) and is not on this form. Protocol v1 gift-wrap was removed upstream.
 - **Fiat currencies default to empty** (accept all). A comma-separated list still restricts which codes this instance will take.
-- **`bitcoin_price_api_url` is upstream's deprecated single-source URL** and is ignored whenever a `[price]` block is present, which on this package is always; set the Yadio URL in **Configure Price Providers** instead.
-- **`serbero_pubkey` is optional.** If you run a [Serbero](https://github.com/MostroP2P/serbero) dispute assistant, put its npub or hex here; leave empty otherwise. Mostro registers it as a read-only solver at boot and announces it in the info event.
+- **`serbero_pubkey` is optional.** If you run a [Serbero](https://github.com/MostroP2P/serbero) dispute assistant, put its npub or hex here; leave empty otherwise. Mostro registers it as a read-only solver at boot and announces it in the info event. A value that is not an npub or 64-character hex key is refused, since Mostro would not start with it.
+- **The developer fee percentage stays between 0.10 and 1**, the range Mostro accepts at startup.
 
 #### Expiration Settings
 

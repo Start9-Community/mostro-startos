@@ -53,18 +53,18 @@ export const nostrRelays = sdk.Action.withInput(
   },
 
   async ({ effects, input }) => {
-    // The list's per-item `patterns` are enforced in the UI only, not on
-    // programmatic submits — so validate the relay URLs here too before they
-    // reach the daemon's config.
     const relays = input.relays.map((r) => r.trim()).filter((r) => r.length > 0)
     const invalid = relays.filter((r) => !/^wss?:\/\/\S+$/.test(r))
     if (invalid.length > 0) {
       throw new Error(
-        `Invalid relay URL(s): ${invalid.join(', ')}. Each relay must be a ws:// or wss:// URL.`,
+        i18n(
+          'Invalid relay URL(s): ${urls}. Each relay must be a ws:// or wss:// URL.',
+          { urls: invalid.join(', ') },
+        ),
       )
     }
     if (relays.length === 0) {
-      throw new Error('At least one Nostr relay URL is required.')
+      throw new Error(i18n('At least one Nostr relay URL is required.'))
     }
 
     await daemon_settings.merge(effects, {
