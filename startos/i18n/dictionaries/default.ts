@@ -17,7 +17,7 @@ const dict = {
   'Hold Invoice Expiration Window': 24,
   'This is the time that a taker has to pay the invoice (seller) or to add a new invoice (buyer), in seconds': 25,
   'Payment Attempts': 26,
-  'How many times Mostro retries a payment to a user after it fails.': 27,
+  'Total payment attempts, including the initial attempt.': 27,
   'Payment Retries Interval': 28,
   'Seconds Mostro waits between retries of a failed payment.': 29,
   'Nostr Private Key': 30,

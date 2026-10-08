@@ -41,9 +41,7 @@ export const inputSpec = InputSpec.of({
   }),
   payment_attempts: Value.number({
     name: i18n('Payment Attempts'),
-    description: i18n(
-      'How many times Mostro retries a payment to a user after it fails.',
-    ),
+    description: i18n('Total payment attempts, including the initial attempt.'),
     default: 3,
     required: true,
     integer: true,
