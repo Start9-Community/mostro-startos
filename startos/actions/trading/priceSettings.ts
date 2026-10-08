@@ -84,7 +84,9 @@ export const inputSpec = InputSpec.of({
   }),
   publish_to_nostr: Value.select({
     name: i18n('Publish Rates To Nostr'),
-    description: i18n('Publish aggregated rates to Nostr (kind 30078)'),
+    description: i18n(
+      '- Enabled: Mostro publishes its aggregated rates as a Nostr event (kind 30078), which other Mostro nodes can use as a price source\n- Disabled: the rates are used by this node only',
+    ),
     default: 'true',
     values: {
       true: i18n('Enabled'),
@@ -93,7 +95,9 @@ export const inputSpec = InputSpec.of({
   }),
   yadio_enabled: Value.select({
     name: i18n('Yadio Enabled'),
-    description: i18n('Use Yadio as a price source'),
+    description: i18n(
+      '- Enabled: Yadio is one of the price sources\n- Disabled: not queried',
+    ),
     default: 'true',
     values: {
       true: i18n('Enabled'),
@@ -102,14 +106,16 @@ export const inputSpec = InputSpec.of({
   }),
   yadio_url: Value.text({
     name: i18n('Yadio URL'),
-    description: i18n('Yadio API base URL'),
+    description: null,
     placeholder: 'https://api.yadio.io',
     default: 'https://api.yadio.io',
     required: true,
   }),
   coingecko_enabled: Value.select({
     name: i18n('CoinGecko Enabled'),
-    description: i18n('Use CoinGecko as a price source'),
+    description: i18n(
+      '- Enabled: CoinGecko is one of the price sources\n- Disabled: not queried',
+    ),
     default: 'true',
     values: {
       true: i18n('Enabled'),
@@ -127,7 +133,9 @@ export const inputSpec = InputSpec.of({
   }),
   coingecko_api_key: Value.text({
     name: i18n('CoinGecko API Key'),
-    description: i18n('Optional CoinGecko demo/pro API key'),
+    description: i18n(
+      "Optional demo or pro API key; raises CoinGecko's rate limits.",
+    ),
     placeholder: 'CG-xxxx',
     default: '',
     required: false,
@@ -136,7 +144,7 @@ export const inputSpec = InputSpec.of({
   currency_api_enabled: Value.select({
     name: i18n('Currency API Enabled'),
     description: i18n(
-      'Use the keyless currency-api CDN (300+ currencies; CUP/MLC excluded by default)',
+      '- Enabled: the keyless currency-api CDN is one of the price sources (300+ currencies at official rates; CUP and MLC are excluded by default)\n- Disabled: not queried',
     ),
     default: 'true',
     values: {
@@ -187,7 +195,7 @@ export const inputSpec = InputSpec.of({
   blockchain_enabled: Value.select({
     name: i18n('Blockchain.info Enabled'),
     description: i18n(
-      'Use Blockchain.info as a price source (~28 major fiats)',
+      '- Enabled: Blockchain.info is one of the price sources (about 28 major fiat currencies)\n- Disabled: not queried',
     ),
     default: 'true',
     values: {
@@ -197,7 +205,7 @@ export const inputSpec = InputSpec.of({
   }),
   blockchain_url: Value.text({
     name: i18n('Blockchain.info URL'),
-    description: i18n('Blockchain.info API base URL'),
+    description: null,
     placeholder: 'https://blockchain.info',
     default: 'https://blockchain.info',
     required: true,
@@ -205,7 +213,7 @@ export const inputSpec = InputSpec.of({
   eltoque_enabled: Value.select({
     name: i18n('El Toque Enabled'),
     description: i18n(
-      'Informal-market CUP/MLC via El Toque. Requires a token. Keep off until you have confirmed the API.',
+      '- Enabled: El Toque supplies informal-market CUP and MLC rates and needs El Toque Token. Mostro marks this source provisional; keep it off until you have confirmed it works\n- Disabled: not queried',
     ),
     default: 'false',
     values: {
@@ -215,7 +223,7 @@ export const inputSpec = InputSpec.of({
   }),
   eltoque_url: Value.text({
     name: i18n('El Toque URL'),
-    description: i18n('El Toque API base URL'),
+    description: null,
     placeholder: 'https://tasas.eltoque.com',
     default: 'https://tasas.eltoque.com',
     required: true,
@@ -246,7 +254,7 @@ export const inputSpec = InputSpec.of({
   nostr_enabled: Value.select({
     name: i18n('Nostr Price Enabled'),
     description: i18n(
-      'Subscribe to rates published by trusted Mostro nodes over Nostr instead of an HTTP API',
+      '- Enabled: take rates from the price events (kind 30078) that the Trusted Price Nodes publish, over the relays set in Nostr Settings; for regions where price APIs are blocked\n- Disabled: not used',
     ),
     default: 'false',
     values: {

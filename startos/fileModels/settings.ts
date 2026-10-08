@@ -13,7 +13,7 @@ export const defaultMakerBondPaymentTimeoutSeconds = 900
 const natural = (defaultVal: number) =>
   z.number().int().nonnegative().catch(defaultVal)
 
-const lightningSchema = z.object({
+const lightningSchema = z.looseObject({
   lnd_cert_file: z.string().catch(lndCredPaths.cert),
   lnd_macaroon_file: z.string().catch(lndCredPaths.macaroon),
   lnd_grpc_host: z.string().optional().catch(undefined),
@@ -32,12 +32,12 @@ const lightningSchema = z.object({
   allow_node_change: z.literal(false).catch(false),
 })
 
-const nostrSchema = z.object({
+const nostrSchema = z.looseObject({
   nsec_privkey: z.string().catch(''),
   relays: z.array(z.string()).catch([...DEFAULT_NOSTR_RELAYS]),
 })
 
-const mostroSchema = z.object({
+const mostroSchema = z.looseObject({
   name: z.string().catch(''),
   about: z.string().catch(''),
   picture: z.string().catch(''),
@@ -65,11 +65,11 @@ const mostroSchema = z.object({
   serbero_pubkey: z.string().catch(''),
 })
 
-const databaseSchema = z.object({
+const databaseSchema = z.looseObject({
   url: z.string().catch('sqlite://mostro.db'),
 })
 
-const expirationSchema = z.object({
+const expirationSchema = z.looseObject({
   order_days: natural(30),
   rating_days: natural(90),
   dispute_days: natural(90),
@@ -79,25 +79,25 @@ const expirationSchema = z.object({
 
 // The admin RPC is localhost-only by Mostro's design (no auth; never exposed).
 // These are fixed by the package, not user-configurable.
-const rpcSchema = z.object({
+const rpcSchema = z.looseObject({
   enabled: z.boolean().catch(true),
   listen_address: z.string().catch('127.0.0.1'),
   port: natural(50051),
   rate_limiter_stale_duration: natural(3600),
 })
 
-const priceProviderYadioSchema = z.object({
+const priceProviderYadioSchema = z.looseObject({
   enabled: z.boolean().catch(true),
   url: z.string().catch('https://api.yadio.io'),
 })
 
-const priceProviderCoingeckoSchema = z.object({
+const priceProviderCoingeckoSchema = z.looseObject({
   enabled: z.boolean().catch(true),
   url: z.string().catch('https://api.coingecko.com/api/v3'),
   api_key: z.string().catch(''),
 })
 
-const priceProviderCurrencyApiSchema = z.object({
+const priceProviderCurrencyApiSchema = z.looseObject({
   enabled: z.boolean().catch(true),
   url: z.string().catch('https://currency-api.pages.dev/v1'),
   fallback_urls: z
@@ -108,24 +108,24 @@ const priceProviderCurrencyApiSchema = z.object({
   except: z.array(z.string()).catch(['CUP', 'MLC']),
 })
 
-const priceProviderBlockchainSchema = z.object({
+const priceProviderBlockchainSchema = z.looseObject({
   enabled: z.boolean().catch(true),
   url: z.string().catch('https://blockchain.info'),
 })
 
-const priceProviderEltoqueSchema = z.object({
+const priceProviderEltoqueSchema = z.looseObject({
   enabled: z.boolean().catch(false),
   url: z.string().catch('https://tasas.eltoque.com'),
   token: z.string().catch(''),
   only: z.array(z.string()).catch(['CUP', 'MLC']),
 })
 
-const priceProviderNostrSchema = z.object({
+const priceProviderNostrSchema = z.looseObject({
   enabled: z.boolean().catch(false),
   trusted_nodes: z.array(z.string()).catch([]),
 })
 
-const priceProvidersSchema = z.object({
+const priceProvidersSchema = z.looseObject({
   yadio: priceProviderYadioSchema.catch(() =>
     priceProviderYadioSchema.parse({}),
   ),
@@ -146,7 +146,7 @@ const priceProvidersSchema = z.object({
   ),
 })
 
-const priceSchema = z.object({
+const priceSchema = z.looseObject({
   update_interval_seconds: natural(300),
   max_price_staleness_seconds: natural(1800),
   outlier_threshold_pct: z.number().catch(5.0),
@@ -157,7 +157,7 @@ const priceSchema = z.object({
   providers: priceProvidersSchema.catch(() => priceProvidersSchema.parse({})),
 })
 
-const antiAbuseBondSchema = z.object({
+const antiAbuseBondSchema = z.looseObject({
   enabled: z.boolean().catch(false),
   amount_pct: z.number().catch(0.01),
   base_amount_sats: natural(1000),
@@ -176,7 +176,7 @@ const antiAbuseBondSchema = z.object({
     .catch(defaultMakerBondPaymentTimeoutSeconds),
 })
 
-const shape = z.object({
+const shape = z.looseObject({
   lightning: lightningSchema.catch(() => lightningSchema.parse({})),
   nostr: nostrSchema.catch(() => nostrSchema.parse({})),
   mostro: mostroSchema.catch(() => mostroSchema.parse({})),

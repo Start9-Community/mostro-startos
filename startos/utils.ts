@@ -74,6 +74,15 @@ export function isValidNsec(nsec: string): boolean {
   )
 }
 
+/** Validates a Nostr public key given as an npub or as 64 hex characters. */
+export function isValidNostrPubkey(key: string): boolean {
+  if (/^[0-9a-fA-F]{64}$/.test(key)) return true
+  const decoded = bech32Decode(key)
+  return (
+    decoded !== null && decoded.hrp === 'npub' && decoded.bytes.length === 32
+  )
+}
+
 /** Read-only mount point for the LND dependency's data volume. */
 export const lndMount = '/mnt/lnd'
 

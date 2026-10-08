@@ -3,6 +3,7 @@ import {
   gRPCPort as lndGrpcPort,
 } from 'lnd-startos/startos/interfaces'
 import { i18n } from './i18n'
+import { dependencies } from './dependencies'
 import { sdk } from './sdk'
 import { daemon_settings } from './fileModels/settings'
 import { lndCredPaths, lndMount } from './utils'
@@ -10,7 +11,7 @@ import { lndCredPaths, lndMount } from './utils'
 export const main = sdk.setupMain(async ({ effects }) => {
   console.info(i18n('Starting Mostro!'))
 
-  const depResult = await sdk.checkDependencies(effects)
+  const depResult = await dependencies.check(effects)
   depResult.throwIfNotSatisfied()
 
   // LND's gRPC over the bridge — LND's StartOS-issued cert covers the bridge

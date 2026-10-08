@@ -1,6 +1,7 @@
 import { daemon_settings } from '../../fileModels/settings'
 import { i18n } from '../../i18n'
 import { sdk } from '../../sdk'
+import { isValidNostrPubkey } from '../../utils'
 
 const { InputSpec, Value } = sdk
 
@@ -19,7 +20,7 @@ export const inputSpec = InputSpec.of({
   name: Value.text({
     name: i18n('Mostro Name'),
     description: i18n(
-      'Human-readable name for this Mostro instance (NIP-01 kind 0)',
+      "Name published in this Mostro instance's Nostr profile (NIP-01 kind 0 metadata). Optional.",
     ),
     placeholder: 'Mostro',
     default: '',
@@ -27,7 +28,9 @@ export const inputSpec = InputSpec.of({
   }),
   about: Value.text({
     name: i18n('About'),
-    description: i18n('Short description of this Mostro instance'),
+    description: i18n(
+      'Short description published in the same Nostr profile. Optional.',
+    ),
     placeholder:
       'A peer-to-peer Bitcoin trading daemon over the Lightning Network',
     default: '',
@@ -44,14 +47,18 @@ export const inputSpec = InputSpec.of({
   }),
   website: Value.text({
     name: i18n('Website URL'),
-    description: i18n('Operator website URL'),
+    description: i18n(
+      'Your website, published in the same Nostr profile. Optional.',
+    ),
     placeholder: 'https://mostro.network',
     default: '',
     required: false,
   }),
   fee: Value.number({
     name: i18n('Mostro Fee'),
-    description: i18n('Mostro fee percentage'),
+    description: i18n(
+      'Fee charged on each trade, as a fraction of the order amount (0.006 = 0.6%), split equally between buyer and seller. 0 charges no fee.',
+    ),
     default: 0,
     required: true,
     integer: false,
@@ -80,7 +87,9 @@ export const inputSpec = InputSpec.of({
   }),
   min_payment_amount: Value.number({
     name: i18n('Min Payment Amount'),
-    description: i18n('Minimum amount for a payment in satoshis'),
+    description: i18n(
+      "Smallest order, in satoshis, this node accepts; buyers' invoices must be at least this much too.",
+    ),
     default: 100,
     required: true,
     integer: true,
@@ -89,7 +98,9 @@ export const inputSpec = InputSpec.of({
   }),
   expiration_hours: Value.number({
     name: i18n('Expiration Hours'),
-    description: i18n('Default expiration time for orders in hours'),
+    description: i18n(
+      'Hours a new order stays published when its maker sets no expiration.',
+    ),
     default: 24,
     required: true,
     integer: true,
@@ -98,7 +109,9 @@ export const inputSpec = InputSpec.of({
   }),
   max_expiration_days: Value.number({
     name: i18n('Max Expiration Days'),
-    description: i18n('Maximum expiration days for an order'),
+    description: i18n(
+      'Longest a maker can keep an order published, in days; a later expiration is cut back to this.',
+    ),
     default: 15,
     required: true,
     integer: true,
@@ -107,7 +120,9 @@ export const inputSpec = InputSpec.of({
   }),
   expiration_seconds: Value.number({
     name: i18n('Expiration Seconds'),
-    description: i18n('Expiration of pending orders in seconds'),
+    description: i18n(
+      'Seconds a taken order waits for its next step (the seller paying the hold invoice, or the buyer sending an invoice) before Mostro cancels the take and republishes the order.',
+    ),
     default: 900,
     required: true,
     integer: true,
@@ -116,7 +131,9 @@ export const inputSpec = InputSpec.of({
   }),
   user_rates_sent_interval_seconds: Value.number({
     name: i18n('User Rates Interval'),
-    description: i18n('User rate events scheduled time interval in seconds'),
+    description: i18n(
+      'How often, in seconds, Mostro publishes queued user rating events to the relays.',
+    ),
     default: 3600,
     required: true,
     integer: true,
@@ -125,7 +142,9 @@ export const inputSpec = InputSpec.of({
   }),
   publish_relays_interval: Value.number({
     name: i18n('Publish Relays Interval'),
-    description: i18n('Relay list event time interval in seconds'),
+    description: i18n(
+      'How often, in seconds, Mostro publishes its relay list event.',
+    ),
     default: 60,
     required: true,
     integer: true,
@@ -134,7 +153,9 @@ export const inputSpec = InputSpec.of({
   }),
   pow: Value.number({
     name: i18n('Proof of Work'),
-    description: i18n('Requested proof of work difficulty'),
+    description: i18n(
+      'Proof-of-work difficulty, in leading zero bits, that events sent to Mostro must carry. 0 requires none.',
+    ),
     default: 0,
     required: true,
     integer: true,
@@ -143,21 +164,14 @@ export const inputSpec = InputSpec.of({
   }),
   publish_mostro_info_interval: Value.number({
     name: i18n('Publish Mostro Info Interval'),
-    description: i18n('Publish mostro info interval in seconds'),
+    description: i18n(
+      'How often, in seconds, Mostro republishes its info event, which announces its settings and limits to clients.',
+    ),
     default: 300,
     required: true,
     integer: true,
     min: 60,
     max: 3600,
-  }),
-  bitcoin_price_api_url: Value.text({
-    name: i18n('Bitcoin Price API URL'),
-    description: i18n(
-      'Legacy Bitcoin price API base URL (prefer Price Provider settings when configured)',
-    ),
-    placeholder: 'https://api.yadio.io',
-    default: 'https://api.yadio.io',
-    required: true,
   }),
   fiat_currencies_accepted: Value.text({
     name: i18n('Fiat Currencies Accepted'),
@@ -170,7 +184,9 @@ export const inputSpec = InputSpec.of({
   }),
   max_orders_per_response: Value.number({
     name: i18n('Max Orders Per Response'),
-    description: i18n('Maximum orders per response in orders action'),
+    description: i18n(
+      'Most orders a client can ask for in one orders request; a larger request is refused.',
+    ),
     default: 10,
     required: true,
     integer: true,
@@ -185,7 +201,7 @@ export const inputSpec = InputSpec.of({
     default: 0.3,
     required: true,
     integer: false,
-    min: 0,
+    min: 0.1,
     max: 1,
   }),
   serbero_pubkey: Value.text({
@@ -234,8 +250,6 @@ export const mostroSettings = sdk.Action.withInput(
       pow: mostroConfig?.pow ?? 0,
       publish_mostro_info_interval:
         mostroConfig?.publish_mostro_info_interval ?? 300,
-      bitcoin_price_api_url:
-        mostroConfig?.bitcoin_price_api_url ?? 'https://api.yadio.io',
       fiat_currencies_accepted: (
         mostroConfig?.fiat_currencies_accepted ?? []
       ).join(','),
@@ -246,6 +260,11 @@ export const mostroSettings = sdk.Action.withInput(
   },
 
   async ({ effects, input }) => {
+    const serberoPubkey = (input.serbero_pubkey ?? '').trim()
+    if (serberoPubkey && !isValidNostrPubkey(serberoPubkey)) {
+      throw new Error(i18n('Must be an npub or a 64-character hex public key'))
+    }
+
     await daemon_settings.merge(effects, {
       mostro: {
         name: input.name ?? '',
@@ -264,13 +283,12 @@ export const mostroSettings = sdk.Action.withInput(
         publish_relays_interval: input.publish_relays_interval,
         pow: input.pow,
         publish_mostro_info_interval: input.publish_mostro_info_interval,
-        bitcoin_price_api_url: input.bitcoin_price_api_url,
         fiat_currencies_accepted: parseFiatCurrencyList(
           input.fiat_currencies_accepted ?? '',
         ),
         max_orders_per_response: input.max_orders_per_response,
         dev_fee_percentage: input.dev_fee_percentage,
-        serbero_pubkey: (input.serbero_pubkey ?? '').trim(),
+        serbero_pubkey: serberoPubkey,
       },
     })
   },

@@ -35,7 +35,6 @@ verified, tried, and decided belongs in the commit message and the PR body.
 ## This repo
 
 - **PRs target `Start9-Community/mostro-startos`, not its parent `MostroP2P/mostro-startos`.** CI, the registry release and `manifest.packageRepo` all name the community fork, but GitHub's Contribute button proposes the parent. The parent fast-forwards from community after a merge; never "Sync fork" the community repo, which would take the parent's `master` in unreviewed.
-- **Relay URLs are validated in the handler as well as the form.** `List.text` `patterns` are enforced by the UI only; a programmatic submit bypasses them and a bad relay reaches the config.
 - **Import LND's host id and port from `lnd-startos/startos/interfaces`** rather than hardcoding, so a change on LND's side is a compile error here.
 - **The LND mount is idmapped `0 → 1000`** so `mostrouser` can read credentials LND wrote as root, straight off the read-only mount. Don't replace it with a copy step — a copy goes stale when LND rotates its cert.
-- **The dependency requires LND's `sync-progress` check, not just `running`.** Mostro settles hold invoices; an unsynced node cannot do that safely.
+- **Keep the LND dependency on its `sync-progress` health check, not just `running`.** Mostro settles hold invoices; an unsynced node cannot do that safely.
