@@ -25,7 +25,7 @@ There is **no app to open and no interface to connect to** — and that's expect
 
 So "using" your instance means people **trade against it with a Mostro client app**:
 
-1. A trader installs a Mostro client — [mostro-cli](https://github.com/MostroP2P/mostro-cli) (command line) or [Mostro Mobile](https://github.com/MostroP2P/mobile) (Android) — and points it at the **same relay(s)** your instance uses, plus your instance's **npub**. (Clients can also discover instances on a relay automatically, since `mostrod` publishes a "Mostro info" event.)
+1. A trader installs a Mostro client — [mostro-cli](https://github.com/MostroP2P/mostro-cli) (command line) or the [Mostro App](https://github.com/MostroP2P/app) (Android, desktop and web) — and points it at the **same relay(s)** your instance uses, plus your instance's **npub**. (Clients can also discover instances on a relay automatically, since `mostrod` publishes a "Mostro info" event.)
 2. They post an order; it lands on the relay; your `mostrod` picks it up, runs the Lightning hold-invoice escrow, and replies over the relay; their client shows the result.
 
 ### Administering your instance
