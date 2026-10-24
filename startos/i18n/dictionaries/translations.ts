@@ -186,6 +186,7 @@ export default {
     217: 'Días desde la primera operación de ese tipo del vendedor antes de que cuente como experimentado',
     218: 'Configurar historial de pagador',
     219: 'Configurar el historial de cuentas de pago y los requisitos de declare-payer',
+    220: 'Margen de plazo del escrow debe ser menor que Delta CLTV de la hold-invoice',
   },
   de_DE: {
     0: 'Starte Mostro!',
@@ -372,6 +373,7 @@ export default {
     217: 'Tage seit dem ersten solchen Trade dieses Verkäufers, bevor er als erfahren zählt',
     218: 'Zahlerhistorie konfigurieren',
     219: 'Zahlungskonto-Historie und declare-payer-Anforderungen konfigurieren',
+    220: 'Escrow-Fristmarge muss unter Hold-Invoice-CLTV-Delta liegen',
   },
   pl_PL: {
     0: 'Uruchamianie Mostro!',
@@ -558,6 +560,7 @@ export default {
     217: 'Dni od pierwszej takiej transakcji sprzedawcy, zanim liczy się jako doświadczony',
     218: 'Konfiguruj historię płatnika',
     219: 'Konfiguruj historię kont płatności i wymagania declare-payer',
+    220: 'Margines terminu escrow musi być mniejszy niż Delta CLTV hold-invoice',
   },
   fr_FR: {
     0: 'Démarrage de Mostro !',
@@ -744,5 +747,6 @@ export default {
     217: 'Jours depuis le premier tel échange de ce vendeur avant qu’il compte comme expérimenté',
     218: 'Configurer l’historique du payeur',
     219: 'Configurer l’historique des comptes de paiement et les exigences declare-payer',
+    220: 'Marge de délai d’escrow doit être inférieure à Delta CLTV de la hold-invoice',
   },
 } satisfies Record<string, LangDict>

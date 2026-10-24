@@ -25,7 +25,7 @@ export const inputSpec = InputSpec.of({
     default: 144,
     required: true,
     integer: true,
-    min: 1,
+    min: 19,
     max: 1000,
   }),
   hold_invoice_expiration_window: Value.number({
@@ -78,7 +78,7 @@ export const inputSpec = InputSpec.of({
     default: 24,
     required: true,
     integer: true,
-    min: 12,
+    min: 18,
     max: 2016,
   }),
   max_inflight_payouts: Value.number({
@@ -157,6 +157,11 @@ export const lnSettings = sdk.Action.withInput(
   },
 
   async ({ effects, input }) => {
+    if (input.escrow_deadline_margin_blocks >= input.hold_invoice_cltv_delta) {
+      throw new Error(
+        i18n('Escrow Deadline Margin must be below Hold Invoice CLTV Delta'),
+      )
+    }
     await daemon_settings.merge(effects, {
       lightning: {
         lnd_cert_file: lndCredPaths.cert,

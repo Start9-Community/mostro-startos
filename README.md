@@ -35,11 +35,11 @@
 
 ## Image and Container Runtime
 
-One upstream image, consumed unmodified.
+The upstream image. The root `Dockerfile` upgrades its CA store, a temporary layer that comes out once upstream ships an image built on a fixed store.
 
 | Property      | Value                                     |
 | ------------- | ----------------------------------------- |
-| Image         | `mostrop2p/mostro`                        |
+| Image         | `mostrop2p/mostro` + root `Dockerfile`    |
 | Architectures | x86_64, aarch64                           |
 | Command       | The daemon, pointed at the data directory |
 
@@ -187,7 +187,7 @@ Poll cadence, outlier and circuit-breaker limits, whether aggregated rates are p
 Optional payment-account history across trades (anti-triangulation), whether declare-payer is required before fiat-sent, and the thresholds that mark a seller as experienced.
 
 - **Off by default.** Enabling it changes what buyers must declare before fiat-sent can succeed when require-declaration is also on.
-- **`[reputation_import]` is modelled and pinned off** — 0.19.3 advertises import capability without answering requests; there is no action to turn it on.
+- **`[reputation_import]` is modelled and pinned off**; there is no action to turn it on, and `[reputation_export]` is not written.
 
 ## Tasks
 
@@ -232,7 +232,7 @@ A restored instance comes back as the same Mostro to the network, with its histo
 8. **Mainnet only.** The macaroon path is pinned to Bitcoin mainnet.
 9. **Cashu escrow is not packaged.** Upstream can run without LND in Cashu mode; this package requires LND and leaves `[cashu]` unset.
 10. **Changing Lightning node identity with open escrow is blocked.** `allow_node_change` is pinned false.
-11. **Reputation import stays off.** The settings block exists for forward compatibility; enabling it is not supported in this release.
+11. **Reputation import and export stay off.** The import block is pinned off and the export block is never written.
 
 ---
 
@@ -240,7 +240,7 @@ A restored instance comes back as the same Mostro to the network, with its histo
 
 ```yaml
 package_id: mostro
-image: mostrop2p/mostro
+image: mostrop2p/mostro + root Dockerfile (CA store upgrade)
 architectures:
   - x86_64
   - aarch64
