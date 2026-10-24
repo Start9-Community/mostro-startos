@@ -185,6 +185,7 @@ const dict = {
   'Days since that seller’s first such trade before it counts as experienced': 217,
   'Configure Payer History': 218,
   'Configure payment-account history and declare-payer requirements': 219,
+  'Escrow Deadline Margin must be below Hold Invoice CLTV Delta': 220,
 } as const
 
 /**

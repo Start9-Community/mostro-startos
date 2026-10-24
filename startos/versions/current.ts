@@ -2,110 +2,106 @@ import { IMPOSSIBLE, VersionInfo } from '@start9labs/start-sdk'
 import { daemon_settings } from '../fileModels/settings'
 
 export const current = VersionInfo.of({
-  version: '0.19.3:0',
+  version: '0.20.1:0',
   releaseNotes: {
-    en_US: `Updated Mostro to 0.19.3 (includes 0.19.2).
+    en_US: `Updated Mostro to 0.20.1 (includes 0.20.0).
 
 **Features**
-- **Configure Payer History** — optional payment-account history and declare-payer gating (off by default)
-- Reputation import settings are modelled and kept disabled (upstream preview; do not enable until a later release handles import requests)
-- Maker-chosen Cashu mint and Cashu info-event publish upstream — Cashu escrow is still not packaged here
-- user-info answers with this node's own reputation
-- Dev fees go only on LND mainnet, to \`dev@pay.mostro.foundation\` (0.19.2)
+- Publishes a signed health event (kind 38389) every 60 seconds reporting whether LND is synced, buyers are being paid, relays and the database are working
+- Enters maintenance mode (no new orders or takes; open trades can finish) when LND stays unsynced for 10 minutes, and leaves it once LND has been synced for 5 minutes
+- Reputation import and export are handled upstream — both stay off in this package
 
 **Fixes**
-- LNURL fetches ignore system proxies
+- One bad invoice or a stale order no longer holds up other payouts; failed dev-fee payments back off per order
+- Fewer false warnings for a briefly missing relay, a slow payout, or LND between blocks
 
 **StartOS**
-- Image pin \`mostrop2p/mostro:v0.19.3\` (amd64 + arm64)
-- Package license matches upstream GPL-3.0
-- \`[payer_history]\` and \`[reputation_import]\` are filled on upgrade; reputation import stays pinned off
+- **Escrow Deadline Margin** must be at least 18 blocks and below **Hold Invoice CLTV Delta**; a saved margin under 18 is reset to 24 on upgrade, and the CLTV delta is raised to one block above the margin if needed
 - Cashu escrow is not packaged; this service still requires LND
 
-Full notes: https://github.com/MostroP2P/mostro/releases/tag/v0.19.3`,
-    es_ES: `Mostro actualizado a 0.19.3 (incluye 0.19.2).
+Full notes: https://github.com/MostroP2P/mostro/releases/tag/v0.20.1`,
+    es_ES: `Mostro actualizado a 0.20.1 (incluye 0.20.0).
 
 **Novedades**
-- **Configurar historial de pagador** — historial opcional de cuentas de pago y exigencia de declare-payer (apagado por defecto)
-- Los ajustes de importación de reputación están modelados y se mantienen desactivados (vista previa de upstream; no activar hasta una versión posterior)
-- Mint Cashu elegida por el maker y publicación de info en modo Cashu en upstream — el escrow Cashu sigue sin empaquetarse aquí
-- user-info responde con la reputación propia del nodo
-- Las comisiones de desarrollo solo en LND mainnet, a \`dev@pay.mostro.foundation\` (0.19.2)
+- Publica cada 60 segundos un evento de salud firmado (kind 38389) que indica si LND está sincronizado, si se paga a los compradores y si los relays y la base de datos funcionan
+- Entra en modo mantenimiento (sin nuevas órdenes ni tomas; los trades abiertos pueden terminar) cuando LND sigue sin sincronizar durante 10 minutos, y sale cuando LND lleva 5 minutos sincronizado
+- La importación y exportación de reputación se gestionan en upstream; ambas siguen desactivadas en este paquete
 
 **Correcciones**
-- Las consultas LNURL ignoran los proxies del sistema
+- Una factura defectuosa o una orden caducada ya no retrasan otros pagos; los pagos fallidos de comisiones de desarrollo esperan por orden antes de reintentar
+- Menos avisos falsos por un relay ausente un momento, un pago lento o LND entre bloques
 
 **StartOS**
-- Imagen \`mostrop2p/mostro:v0.19.3\` (amd64 + arm64)
-- La licencia del paquete coincide con GPL-3.0 de upstream
-- \`[payer_history]\` y \`[reputation_import]\` se rellenan al actualizar; la importación de reputación permanece fijada en off
+- **Margen de plazo del escrow** debe ser de al menos 18 bloques y menor que **Delta CLTV de la hold-invoice**; un margen guardado por debajo de 18 se restablece a 24 al actualizar y, si hace falta, el delta CLTV se eleva a un bloque por encima del margen
 - El escrow Cashu no está empaquetado; este servicio sigue requiriendo LND
 
-Notas completas: https://github.com/MostroP2P/mostro/releases/tag/v0.19.3`,
-    de_DE: `Mostro auf 0.19.3 aktualisiert (inkl. 0.19.2).
+Notas completas: https://github.com/MostroP2P/mostro/releases/tag/v0.20.1`,
+    de_DE: `Mostro auf 0.20.1 aktualisiert (inkl. 0.20.0).
 
 **Funktionen**
-- **Zahlerhistorie konfigurieren** — optionale Zahlungskonto-Historie und declare-payer-Zwang (standardmäßig aus)
-- Reputation-Import-Einstellungen sind modelliert und bleiben aus (Upstream-Vorschau; nicht aktivieren, bis eine spätere Version Import-Anfragen beantwortet)
-- Maker-gewählte Cashu-Mint und Cashu-Info-Event upstream — Cashu-Escrow bleibt hier unpaketiert
-- user-info antwortet mit der eigenen Reputation des Knotens
-- Dev-Gebühren nur auf LND-Mainnet an \`dev@pay.mostro.foundation\` (0.19.2)
+- Veröffentlicht alle 60 Sekunden ein signiertes Health-Event (kind 38389), das meldet, ob LND synchronisiert ist, Käufer bezahlt werden und Relays sowie Datenbank funktionieren
+- Wechselt in den Wartungsmodus (keine neuen Orders oder Takes; offene Trades können abschließen), wenn LND 10 Minuten lang nicht synchronisiert ist, und verlässt ihn, sobald LND 5 Minuten synchronisiert ist
+- Reputation-Import und -Export werden upstream verarbeitet — beide bleiben in diesem Paket aus
 
 **Korrekturen**
-- LNURL-Abrufe ignorieren System-Proxys
+- Eine fehlerhafte Rechnung oder eine veraltete Order hält andere Auszahlungen nicht mehr auf; fehlgeschlagene Dev-Gebühren-Zahlungen warten pro Order vor einem neuen Versuch
+- Weniger Fehlwarnungen bei einem kurz fehlenden Relay, einer langsamen Auszahlung oder LND zwischen Blöcken
 
 **StartOS**
-- Image-Pin \`mostrop2p/mostro:v0.19.3\` (amd64 + arm64)
-- Paketlizenz entspricht Upstream GPL-3.0
-- \`[payer_history]\` und \`[reputation_import]\` werden beim Upgrade gesetzt; Reputation-Import bleibt aus
+- **Escrow-Fristmarge** muss mindestens 18 Blöcke betragen und unter **Hold-Invoice-CLTV-Delta** liegen; eine gespeicherte Marge unter 18 wird beim Upgrade auf 24 zurückgesetzt und das CLTV-Delta bei Bedarf auf einen Block über der Marge angehoben
 - Cashu-Escrow ist nicht paketiert; dieser Dienst benötigt weiterhin LND
 
-Vollständige Hinweise: https://github.com/MostroP2P/mostro/releases/tag/v0.19.3`,
-    pl_PL: `Zaktualizowano Mostro do 0.19.3 (zawiera 0.19.2).
+Vollständige Hinweise: https://github.com/MostroP2P/mostro/releases/tag/v0.20.1`,
+    pl_PL: `Zaktualizowano Mostro do 0.20.1 (zawiera 0.20.0).
 
 **Funkcje**
-- **Konfiguruj historię płatnika** — opcjonalna historia kont płatności i wymóg declare-payer (domyślnie wyłączone)
-- Ustawienia importu reputacji są modelowane i pozostają wyłączone (podgląd upstream; nie włączać, dopóki późniejsza wersja nie obsłuży żądań importu)
-- Mint Cashu wybierany przez makera i publikacja info w trybie Cashu w upstream — escrow Cashu nadal nie jest tu pakowany
-- user-info odpowiada własną reputacją węzła
-- Opłaty deweloperskie tylko na LND mainnet, na \`dev@pay.mostro.foundation\` (0.19.2)
+- Co 60 sekund publikuje podpisane zdarzenie zdrowia (kind 38389), informujące, czy LND jest zsynchronizowany, czy kupujący otrzymują wypłaty oraz czy działają przekaźniki i baza danych
+- Przechodzi w tryb konserwacji (bez nowych zleceń i przyjęć; otwarte transakcje mogą się zakończyć), gdy LND pozostaje niezsynchronizowany przez 10 minut, i wychodzi z niego, gdy LND jest zsynchronizowany od 5 minut
+- Import i eksport reputacji są obsługiwane w upstream — w tym pakiecie oba pozostają wyłączone
 
 **Poprawki**
-- Pobieranie LNURL ignoruje systemowe proxy
+- Jedna błędna faktura lub przeterminowane zlecenie nie wstrzymują już innych wypłat; nieudane płatności opłat deweloperskich czekają per zlecenie przed ponowieniem
+- Mniej fałszywych ostrzeżeń przy chwilowo brakującym przekaźniku, wolnej wypłacie lub LND między blokami
 
 **StartOS**
-- Pin obrazu \`mostrop2p/mostro:v0.19.3\` (amd64 + arm64)
-- Licencja pakietu zgodna z GPL-3.0 upstream
-- \`[payer_history]\` i \`[reputation_import]\` uzupełniane przy upgrade; import reputacji pozostaje wyłączony
+- **Margines terminu escrow** musi wynosić co najmniej 18 bloków i być mniejszy niż **Delta CLTV hold-invoice**; zapisany margines poniżej 18 jest przy aktualizacji ustawiany na 24, a delta CLTV w razie potrzeby jest podnoszona do jednego bloku powyżej marginesu
 - Escrow Cashu nie jest spakowany; ta usługa nadal wymaga LND
 
-Pełne uwagi: https://github.com/MostroP2P/mostro/releases/tag/v0.19.3`,
-    fr_FR: `Mostro mis à jour vers 0.19.3 (inclut 0.19.2).
+Pełne uwagi: https://github.com/MostroP2P/mostro/releases/tag/v0.20.1`,
+    fr_FR: `Mostro mis à jour vers 0.20.1 (inclut 0.20.0).
 
 **Fonctionnalités**
-- **Configurer l’historique du payeur** — historique optionnel des comptes de paiement et exigence declare-payer (désactivé par défaut)
-- Les réglages d’import de réputation sont modélisés et restent désactivés (aperçu upstream ; ne pas activer avant une version ultérieure)
-- Mint Cashu choisi par le maker et publication d’info en mode Cashu en amont — l’escrow Cashu n’est toujours pas empaqueté ici
-- user-info répond avec la réputation propre du nœud
-- Frais de développement uniquement sur LND mainnet, vers \`dev@pay.mostro.foundation\` (0.19.2)
+- Publie toutes les 60 secondes un événement de santé signé (kind 38389) indiquant si LND est synchronisé, si les acheteurs sont payés et si les relais et la base de données fonctionnent
+- Passe en mode maintenance (pas de nouveaux ordres ni de prises ; les échanges ouverts peuvent se terminer) quand LND reste non synchronisé pendant 10 minutes, et en sort une fois LND synchronisé depuis 5 minutes
+- L’import et l’export de réputation sont gérés en amont — les deux restent désactivés dans ce paquet
 
 **Corrections**
-- Les requêtes LNURL ignorent les proxies système
+- Une facture invalide ou un ordre périmé ne bloque plus les autres paiements ; les paiements de frais de développement échoués attendent par ordre avant de réessayer
+- Moins de fausses alertes pour un relais brièvement absent, un paiement lent ou LND entre deux blocs
 
 **StartOS**
-- Image \`mostrop2p/mostro:v0.19.3\` (amd64 + arm64)
-- La licence du paquet suit le GPL-3.0 amont
-- \`[payer_history]\` et \`[reputation_import]\` sont renseignés à la mise à jour ; l’import de réputation reste figé désactivé
+- **Marge de délai d’escrow** doit être d’au moins 18 blocs et inférieure à **Delta CLTV de la hold-invoice** ; une marge enregistrée sous 18 est remise à 24 lors de la mise à jour et le delta CLTV est relevé à un bloc au-dessus de la marge si nécessaire
 - L’escrow Cashu n’est pas empaqueté ; ce service exige toujours LND
 
-Notes complètes : https://github.com/MostroP2P/mostro/releases/tag/v0.19.3`,
+Notes complètes : https://github.com/MostroP2P/mostro/releases/tag/v0.20.1`,
   },
   migrations: {
     up: async ({ effects }) => {
-      // Fill new 0.19.3 keys (payer_history, reputation_import) from .catch()
-      // defaults. Existing values stay; reputation_import.enabled is repaired
-      // to false if somehow set.
       await daemon_settings.merge(effects, {})
+      await daemon_settings.update(effects, (settings) => {
+        if (settings === null) return null
+        const lightning = settings.lightning
+        return {
+          ...settings,
+          lightning: {
+            ...lightning,
+            hold_invoice_cltv_delta: Math.max(
+              lightning.hold_invoice_cltv_delta,
+              lightning.escrow_deadline_margin_blocks + 1,
+            ),
+          },
+        }
+      })
     },
     down: IMPOSSIBLE,
   },

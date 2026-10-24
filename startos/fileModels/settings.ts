@@ -24,7 +24,8 @@ const lightningSchema = z.looseObject({
   payment_attempts: natural(3),
   payment_retries_interval: natural(60),
   max_final_cltv_expiry_delta: natural(144),
-  escrow_deadline_margin_blocks: natural(24),
+  // Mostro 0.20 refuses to start below 18; repair a stale config.
+  escrow_deadline_margin_blocks: z.number().int().min(18).catch(24),
   max_inflight_payouts: natural(100),
   max_inflight_payouts_per_destination: natural(10),
   payment_cltv_limit: natural(1008),
@@ -189,8 +190,7 @@ const reputationIssuerSchema = z.looseObject({
   keys: z.array(z.string()),
 })
 
-// Reputation import (preview in 0.19.3). Pin enabled false — upstream says
-// do not turn it on until a later release handles import-reputation.
+// This package does not support reputation import; pin enabled false.
 const reputationImportSchema = z.looseObject({
   enabled: z.literal(false).catch(false),
   max_lifetime_seconds: natural(604800),
