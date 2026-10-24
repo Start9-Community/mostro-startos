@@ -35,11 +35,11 @@
 
 ## Image and Container Runtime
 
-The upstream image. The root `Dockerfile` upgrades its CA store, a temporary layer that comes out once upstream ships an image built on a fixed store.
+One upstream image, consumed unmodified.
 
 | Property      | Value                                     |
 | ------------- | ----------------------------------------- |
-| Image         | `mostrop2p/mostro` + root `Dockerfile`    |
+| Image         | `mostrop2p/mostro`                        |
 | Architectures | x86_64, aarch64                           |
 | Command       | The daemon, pointed at the data directory |
 
@@ -240,7 +240,7 @@ A restored instance comes back as the same Mostro to the network, with its histo
 
 ```yaml
 package_id: mostro
-image: mostrop2p/mostro + root Dockerfile (CA store upgrade)
+image: mostrop2p/mostro
 architectures:
   - x86_64
   - aarch64
