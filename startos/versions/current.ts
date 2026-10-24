@@ -16,7 +16,7 @@ export const current = VersionInfo.of({
 - Fewer false warnings for a briefly missing relay, a slow payout, or LND between blocks
 
 **StartOS**
-- **Escrow Deadline Margin** must be at least 18 blocks and below **Hold Invoice CLTV Delta**; a saved margin under 18 is reset to 24 on upgrade
+- **Escrow Deadline Margin** must be at least 18 blocks and below **Hold Invoice CLTV Delta**; a saved margin under 18 is reset to 24 on upgrade, and the CLTV delta is raised to one block above the margin if needed
 - Cashu escrow is not packaged; this service still requires LND
 
 Full notes: https://github.com/MostroP2P/mostro/releases/tag/v0.20.1`,
@@ -32,7 +32,7 @@ Full notes: https://github.com/MostroP2P/mostro/releases/tag/v0.20.1`,
 - Menos avisos falsos por un relay ausente un momento, un pago lento o LND entre bloques
 
 **StartOS**
-- **Margen de plazo del escrow** debe ser de al menos 18 bloques y menor que **Delta CLTV de la hold-invoice**; un margen guardado por debajo de 18 se restablece a 24 al actualizar
+- **Margen de plazo del escrow** debe ser de al menos 18 bloques y menor que **Delta CLTV de la hold-invoice**; un margen guardado por debajo de 18 se restablece a 24 al actualizar y, si hace falta, el delta CLTV se eleva a un bloque por encima del margen
 - El escrow Cashu no está empaquetado; este servicio sigue requiriendo LND
 
 Notas completas: https://github.com/MostroP2P/mostro/releases/tag/v0.20.1`,
@@ -48,7 +48,7 @@ Notas completas: https://github.com/MostroP2P/mostro/releases/tag/v0.20.1`,
 - Weniger Fehlwarnungen bei einem kurz fehlenden Relay, einer langsamen Auszahlung oder LND zwischen Blöcken
 
 **StartOS**
-- **Escrow-Fristmarge** muss mindestens 18 Blöcke betragen und unter **Hold-Invoice-CLTV-Delta** liegen; eine gespeicherte Marge unter 18 wird beim Upgrade auf 24 zurückgesetzt
+- **Escrow-Fristmarge** muss mindestens 18 Blöcke betragen und unter **Hold-Invoice-CLTV-Delta** liegen; eine gespeicherte Marge unter 18 wird beim Upgrade auf 24 zurückgesetzt und das CLTV-Delta bei Bedarf auf einen Block über der Marge angehoben
 - Cashu-Escrow ist nicht paketiert; dieser Dienst benötigt weiterhin LND
 
 Vollständige Hinweise: https://github.com/MostroP2P/mostro/releases/tag/v0.20.1`,
@@ -64,7 +64,7 @@ Vollständige Hinweise: https://github.com/MostroP2P/mostro/releases/tag/v0.20.1
 - Mniej fałszywych ostrzeżeń przy chwilowo brakującym przekaźniku, wolnej wypłacie lub LND między blokami
 
 **StartOS**
-- **Margines terminu escrow** musi wynosić co najmniej 18 bloków i być mniejszy niż **Delta CLTV hold-invoice**; zapisany margines poniżej 18 jest przy aktualizacji ustawiany na 24
+- **Margines terminu escrow** musi wynosić co najmniej 18 bloków i być mniejszy niż **Delta CLTV hold-invoice**; zapisany margines poniżej 18 jest przy aktualizacji ustawiany na 24, a delta CLTV w razie potrzeby jest podnoszona do jednego bloku powyżej marginesu
 - Escrow Cashu nie jest spakowany; ta usługa nadal wymaga LND
 
 Pełne uwagi: https://github.com/MostroP2P/mostro/releases/tag/v0.20.1`,
@@ -80,7 +80,7 @@ Pełne uwagi: https://github.com/MostroP2P/mostro/releases/tag/v0.20.1`,
 - Moins de fausses alertes pour un relais brièvement absent, un paiement lent ou LND entre deux blocs
 
 **StartOS**
-- **Marge de délai d’escrow** doit être d’au moins 18 blocs et inférieure à **Delta CLTV de la hold-invoice** ; une marge enregistrée sous 18 est remise à 24 lors de la mise à jour
+- **Marge de délai d’escrow** doit être d’au moins 18 blocs et inférieure à **Delta CLTV de la hold-invoice** ; une marge enregistrée sous 18 est remise à 24 lors de la mise à jour et le delta CLTV est relevé à un bloc au-dessus de la marge si nécessaire
 - L’escrow Cashu n’est pas empaqueté ; ce service exige toujours LND
 
 Notes complètes : https://github.com/MostroP2P/mostro/releases/tag/v0.20.1`,
@@ -88,6 +88,20 @@ Notes complètes : https://github.com/MostroP2P/mostro/releases/tag/v0.20.1`,
   migrations: {
     up: async ({ effects }) => {
       await daemon_settings.merge(effects, {})
+      await daemon_settings.update(effects, (settings) => {
+        if (settings === null) return null
+        const lightning = settings.lightning
+        return {
+          ...settings,
+          lightning: {
+            ...lightning,
+            hold_invoice_cltv_delta: Math.max(
+              lightning.hold_invoice_cltv_delta,
+              lightning.escrow_deadline_margin_blocks + 1,
+            ),
+          },
+        }
+      })
     },
     down: IMPOSSIBLE,
   },
