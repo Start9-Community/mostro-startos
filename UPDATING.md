@@ -24,6 +24,3 @@ Mostro is packaged as a pre-built Docker image from Docker Hub.
 
 1. Update `dockerTag` in `startos/manifest/index.ts` (e.g. `mostrop2p/mostro:v0.19.3`)
 2. Edit `startos/versions/current.ts` — bump `version` to match upstream semver without the `v`, resetting the downstream revision (e.g. upstream `v0.19.3` → `0.19.3:0`)
-3. If the outgoing `current.ts` has a non-empty `migrations.up`, preserve it as `vX.Y.Z_N.ts`, rename its export to `v_X_Y_Z_N`, and add it to `other[]` in `startos/versions/index.ts`. Write a new `current.ts` with only the new version's migration, if needed. If the outgoing migration is empty, bump in place.
-4. Update release notes in `current.ts` (all locales)
-5. Build and test: `make clean x86 install`
