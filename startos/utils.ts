@@ -83,7 +83,7 @@ export function isValidNostrPubkey(key: string): boolean {
   )
 }
 
-/** Read-only mount point for the LND dependency's data volume. */
+/** Read-only mount point for LND's admin credential tier. */
 export const lndMount = '/mnt/lnd'
 
 /**
@@ -94,5 +94,5 @@ export const lndMount = '/mnt/lnd'
  */
 export const lndCredPaths = {
   cert: `${lndMount}/tls.cert`,
-  macaroon: `${lndMount}/data/chain/bitcoin/mainnet/admin.macaroon`,
+  macaroon: `${lndMount}/admin.macaroon`,
 } as const

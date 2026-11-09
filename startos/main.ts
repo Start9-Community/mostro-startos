@@ -59,8 +59,8 @@ export const main = sdk.setupMain(async ({ effects }) => {
     })
     .mountDependency({
       dependencyId: 'lnd',
-      volumeId: 'main',
-      subpath: null,
+      volumeId: 'public',
+      subpath: 'admin',
       mountpoint: lndMount,
       readonly: true,
       // LND writes its creds as root (uid 0); remap to mostrouser (1000) so the

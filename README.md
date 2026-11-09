@@ -53,10 +53,10 @@ One oneshot runs first, giving the data directory to the daemon's user.
 
 One volume, plus a read-only view of LND's.
 
-| Volume            | Mount Point | Purpose                              |
-| ----------------- | ----------- | ------------------------------------ |
-| `main`            | `/mostro`   | The settings and the trade database  |
-| LND's `main` (ro) | `/mnt/lnd`  | LND's certificate and admin macaroon |
+| Volume                        | Mount Point | Purpose                                            |
+| ----------------------------- | ----------- | -------------------------------------------------- |
+| `main`                        | `/mostro`   | The settings and the trade database                |
+| LND's `public` (ro), `admin/` | `/mnt/lnd`  | LND's certificate and admin macaroon, nothing else |
 
 | Path            | Written by | Holds                                      |
 | --------------- | ---------- | ------------------------------------------ |
@@ -91,9 +91,9 @@ The settings file is read reactively, so any action that changes it restarts the
 
 One, and it is required.
 
-| Dependency | Required | Health checks required | Mounted                         | Why                    |
-| ---------- | -------- | ---------------------- | ------------------------------- | ---------------------- |
-| LND        | Yes      | `sync-progress`        | `main`, read-only at `/mnt/lnd` | The escrow and payouts |
+| Dependency | Required | Health checks required | Mounted                                         | Why                    |
+| ---------- | -------- | ---------------------- | ----------------------------------------------- | ---------------------- |
+| LND        | Yes      | `sync-progress`        | `public` tier `admin/`, read-only at `/mnt/lnd` | The escrow and payouts |
 
 **A synced LND is required, not merely a running one.** Mostro holds funds in hold invoices and settles them; an unsynced node cannot do that safely, so the dependency asks for the sync check specifically.
 
@@ -229,7 +229,7 @@ A restored instance comes back as the same Mostro to the network, with its histo
 5. **The backup holds the identity key.**
 6. **Price feeds are external HTTP APIs** (and optionally trusted Mostro nodes over Nostr) and are contacted on a schedule, so the instance's traffic is not confined to LND.
 7. **The admin RPC is unauthenticated** and is pinned to loopback for exactly that reason; it cannot be exported.
-8. **Mainnet only.** The macaroon path is pinned to Bitcoin mainnet.
+8. **Mainnet only.** LND's `admin/` tier carries the mainnet admin macaroon.
 9. **Cashu escrow is not packaged.** Upstream can run without LND in Cashu mode; this package requires LND and leaves `[cashu]` unset.
 10. **Changing Lightning node identity with open escrow is blocked.** `allow_node_change` is pinned false.
 11. **Reputation import and export stay off.** The import block is pinned off and the export block is never written.
@@ -247,7 +247,7 @@ architectures:
 subcontainers:
   - mostro-sub
 volumes:
-  main: /mostro # settings.toml + mostro.db; LND's main is read-only at /mnt/lnd (idmapped 0→1000)
+  main: /mostro # settings.toml + mostro.db; LND's public admin/ tier (admin.macaroon, tls.cert) is read-only at /mnt/lnd (idmapped 0→1000)
 file_models:
   - settings.toml # the entire configuration, including the nsec
 startos_managed_env_vars: [] # everything is settings.toml
