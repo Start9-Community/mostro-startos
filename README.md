@@ -155,10 +155,10 @@ The invoice parameters: expiry windows, the hold-invoice CLTV delta, the payment
 
 #### Mostro Settings
 
-The instance's public profile — name, description, picture, website — plus its economics: the fee it charges, the routing-fee ceiling, order size limits, order and rating publication intervals, proof-of-work difficulty, the accepted fiat currencies, and the developer fee percentage.
+The instance's public profile — name, description, picture, website — plus its economics: the fee it charges, the routing-fee ceiling, order size limits, order and rating publication intervals, proof-of-work difficulty, the accepted currencies, and the developer fee percentage.
 
 - **`transport` is pinned to nip44** (protocol v2) and is not on this form. Protocol v1 gift-wrap was removed upstream.
-- **Fiat currencies default to empty** (accept all). A comma-separated list still restricts which codes this instance will take.
+- **Accepted currencies default to empty** (accept all). A comma-separated list still restricts which codes this instance will take, and must also list every pegged code quoted under Price Provider Settings, or orders in it are refused.
 - **`serbero_pubkey` is optional.** If you run a [Serbero](https://github.com/MostroP2P/serbero) dispute assistant, put its npub or hex here; leave empty otherwise. Mostro registers it as a read-only solver at boot and announces it in the info event. A value that is not an npub or 64-character hex key is refused, since Mostro would not start with it.
 - **The developer fee percentage stays between 0.10 and 1**, the range Mostro accepts at startup.
 
@@ -168,16 +168,19 @@ How long orders, ratings, disputes, fee audit records, and direct messages are r
 
 #### Anti-Abuse Bond Settings
 
-The optional bond takers or makers must post, its size, whether it is slashed on a timeout, how the payout is handled, and how long a maker has to pay the maker bond before the unpublished order expires.
+The optional bond takers or makers must post, its size, whether it is slashed on a timeout, how the payout is handled, how long a maker has to pay the maker bond before the unpublished order expires, and the bond hold invoices' CLTV.
 
 - **Off by default.** Turning it on changes what counterparties must do to trade with you.
 - **Maker bond payment timeout** defaults to 900 seconds and applies when `apply_to` is `make` or `both`.
+- **`bond_cltv_delta` is optional.** Unset, Mostro uses `hold_invoice_cltv_delta + 288`, capped at 864. With bonds on, Mostro refuses to start unless the effective value is above `hold_invoice_cltv_delta + 144` and at most 864, so with the default a `hold_invoice_cltv_delta` of 720 or more has no valid bond CLTV. This form and Lightning Node Settings refuse a combination that would stop the service, and the 0.20.3 upgrade turns bonds off if the saved settings already break it.
 
 #### Price Provider Settings
 
-Poll cadence, outlier and circuit-breaker limits, whether aggregated rates are published to Nostr, and each HTTP/Nostr source (Yadio, CoinGecko, currency-api, Blockchain.info, El Toque, trusted Mostro nodes).
+Poll cadence, outlier, two-source divergence and circuit-breaker limits, whether aggregated rates are published to Nostr, each HTTP/Nostr source (Yadio, CoinGecko, currency-api, Blockchain.info, El Toque, trusted Mostro nodes), and the pegged currencies.
 
 - **The `[price]` block is always present.** The package writes it from defaults on every start, so the legacy single-source synthesis never runs; this form only changes its values.
+- **A currency with exactly two sources that disagree is refused** by Mostro (since 0.20.3) until they agree within `pair_divergence_pct` (unset: `outlier_threshold_pct`). Yadio and currency-api ship with upstream's `except` lists of codes they misquote, so minor fiats keep enough agreeing sources. The 0.20.3 upgrade replaces a currency-api list still at the old `CUP`, `MLC` default.
+- **Pegged currencies stay off.** When on, the stablecoins (USDT, USDC, DOC → USD) and bitcoin on other networks (BTC, LBTC, RBTC → sats) selected are quoted 1:1 with no network call; selecting all of them omits `only`.
 - **El Toque stays off** until you have a token and have confirmed the API; enabling it without a token is rejected.
 - **Nostr prices stay off** until at least one trusted 64-character hex pubkey is listed.
 - **CoinGecko keys and El Toque tokens are stored in `settings.toml`**, so they are in the backup.

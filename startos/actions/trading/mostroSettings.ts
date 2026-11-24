@@ -176,7 +176,7 @@ export const inputSpec = InputSpec.of({
   fiat_currencies_accepted: Value.text({
     name: i18n('Fiat Currencies Accepted'),
     description: i18n(
-      'Comma-separated fiat currency codes (e.g., USD,EUR,ARS,CUP). Leave empty to accept all fiat currencies.',
+      'Comma-separated currency codes (e.g., USD,EUR,ARS,CUP), plus any pegged codes you quote (e.g., USDT,RBTC). Leave empty to accept every code.',
     ),
     placeholder: 'USD,EUR,ARS,CUP',
     default: '',

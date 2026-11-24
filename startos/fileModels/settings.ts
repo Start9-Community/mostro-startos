@@ -10,6 +10,73 @@ export const DEFAULT_NOSTR_RELAYS = [
 
 export const defaultMakerBondPaymentTimeoutSeconds = 900
 
+// Mostro 0.20.3 refuses a currency whose only two sources diverge, so these
+// keep minor fiats priced. Values follow upstream settings.tpl.toml.
+export const DEFAULT_YADIO_EXCEPT = ['ALL', 'BND', 'BTN', 'BZD', 'JMD', 'NPR']
+export const LEGACY_CURRENCY_API_EXCEPT = ['CUP', 'MLC']
+export const DEFAULT_CURRENCY_API_EXCEPT = [
+  ...LEGACY_CURRENCY_API_EXCEPT,
+  'AOA',
+  'BIF',
+  'DZD',
+  'ETB',
+  'GNF',
+  'IQD',
+  'IRR',
+  'LYD',
+  'MWK',
+  'MZN',
+  'SDG',
+  'SLE',
+  'SYP',
+  'TND',
+  'TTD',
+  'VES',
+  'YER',
+]
+
+export const PEGGED_CODES = [
+  'USDT',
+  'USDC',
+  'DOC',
+  'BTC',
+  'LBTC',
+  'RBTC',
+] as const
+export type PeggedCode = (typeof PEGGED_CODES)[number]
+
+// Bond hold-invoice CLTV bounds (mostro src/config/constants.rs).
+const BOND_TRADE_MARGIN_BLOCKS = 144
+const DEFAULT_BOND_BOOK_BLOCKS = 144
+export const MAX_BOND_CLTV_DELTA = 864
+
+export function effectiveBondCltvDelta(
+  bondCltvDelta: number | undefined,
+  holdInvoiceCltvDelta: number,
+): number {
+  return (
+    bondCltvDelta ??
+    Math.min(
+      holdInvoiceCltvDelta +
+        BOND_TRADE_MARGIN_BLOCKS +
+        DEFAULT_BOND_BOOK_BLOCKS,
+      MAX_BOND_CLTV_DELTA,
+    )
+  )
+}
+
+// With bonds enabled, mostrod refuses to start unless this holds.
+export function isBondCltvValid(
+  bondCltvDelta: number | undefined,
+  holdInvoiceCltvDelta: number,
+): boolean {
+  const effective = effectiveBondCltvDelta(bondCltvDelta, holdInvoiceCltvDelta)
+  return (
+    effective > holdInvoiceCltvDelta + BOND_TRADE_MARGIN_BLOCKS &&
+    effective <= MAX_BOND_CLTV_DELTA
+  )
+}
+
 const natural = (defaultVal: number) =>
   z.number().int().nonnegative().catch(defaultVal)
 
@@ -90,6 +157,7 @@ const rpcSchema = z.looseObject({
 const priceProviderYadioSchema = z.looseObject({
   enabled: z.boolean().catch(true),
   url: z.string().catch('https://api.yadio.io'),
+  except: z.array(z.string()).catch([...DEFAULT_YADIO_EXCEPT]),
 })
 
 const priceProviderCoingeckoSchema = z.looseObject({
@@ -106,7 +174,7 @@ const priceProviderCurrencyApiSchema = z.looseObject({
     .catch([
       'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1',
     ]),
-  except: z.array(z.string()).catch(['CUP', 'MLC']),
+  except: z.array(z.string()).catch([...DEFAULT_CURRENCY_API_EXCEPT]),
 })
 
 const priceProviderBlockchainSchema = z.looseObject({
@@ -124,6 +192,13 @@ const priceProviderEltoqueSchema = z.looseObject({
 const priceProviderNostrSchema = z.looseObject({
   enabled: z.boolean().catch(false),
   trusted_nodes: z.array(z.string()).catch([]),
+})
+
+// Stablecoins and bitcoin on other networks, quoted 1:1 with no network call.
+// Absent `only` quotes every pegged code; upstream rejects unknown codes.
+const priceProviderPeggedSchema = z.looseObject({
+  enabled: z.boolean().catch(false),
+  only: z.array(z.enum(PEGGED_CODES)).optional().catch(undefined),
 })
 
 const priceProvidersSchema = z.looseObject({
@@ -145,12 +220,17 @@ const priceProvidersSchema = z.looseObject({
   nostr: priceProviderNostrSchema.catch(() =>
     priceProviderNostrSchema.parse({}),
   ),
+  pegged: priceProviderPeggedSchema.catch(() =>
+    priceProviderPeggedSchema.parse({}),
+  ),
 })
 
 const priceSchema = z.looseObject({
   update_interval_seconds: natural(300),
   max_price_staleness_seconds: natural(1800),
   outlier_threshold_pct: z.number().catch(5.0),
+  // Tolerance for exactly two sources; unset follows outlier_threshold_pct.
+  pair_divergence_pct: z.number().gt(0).max(100).optional().catch(undefined),
   provider_timeout_seconds: natural(10),
   provider_failure_threshold: natural(3),
   provider_failure_cooldown_seconds: natural(120),
@@ -175,6 +255,15 @@ const antiAbuseBondSchema = z.looseObject({
     .int()
     .positive()
     .catch(defaultMakerBondPaymentTimeoutSeconds),
+  // Unset, Mostro derives it from hold_invoice_cltv_delta (see
+  // effectiveBondCltvDelta).
+  bond_cltv_delta: z
+    .number()
+    .int()
+    .positive()
+    .max(MAX_BOND_CLTV_DELTA)
+    .optional()
+    .catch(undefined),
 })
 
 // Payment-account history / anti-triangulation. Opt-in; absent ≡ disabled.

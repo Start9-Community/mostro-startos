@@ -1,6 +1,8 @@
 import {
   daemon_settings,
   defaultMakerBondPaymentTimeoutSeconds,
+  isBondCltvValid,
+  MAX_BOND_CLTV_DELTA,
 } from '../../fileModels/settings'
 import { i18n } from '../../i18n'
 import { sdk } from '../../sdk'
@@ -119,6 +121,17 @@ export const inputSpec = InputSpec.of({
     min: 1,
     max: 86400,
   }),
+  bond_cltv_delta: Value.number({
+    name: i18n('Bond CLTV Delta'),
+    description: i18n(
+      'Expiry, in blocks, of the bond hold invoices. An order rests in the book for at most this minus Hold Invoice CLTV Delta minus 144 blocks. Must be above Hold Invoice CLTV Delta + 144 and at most 864. Leave empty to use Hold Invoice CLTV Delta + 288, capped at 864.',
+    ),
+    default: null,
+    required: false,
+    integer: true,
+    min: 1,
+    max: MAX_BOND_CLTV_DELTA,
+  }),
 })
 
 export const antiAbuseBondSettings = sdk.Action.withInput(
@@ -155,13 +168,28 @@ export const antiAbuseBondSettings = sdk.Action.withInput(
       maker_bond_payment_timeout_seconds:
         bond?.maker_bond_payment_timeout_seconds ??
         defaultMakerBondPaymentTimeoutSeconds,
+      bond_cltv_delta: bond?.bond_cltv_delta ?? null,
     }
   },
 
   async ({ effects, input }) => {
+    const enabled = input.enabled === 'true'
+    const bondCltvDelta = input.bond_cltv_delta ?? undefined
+    if (enabled) {
+      const hold = await daemon_settings
+        .read((s) => s?.lightning.hold_invoice_cltv_delta)
+        .once()
+      if (!isBondCltvValid(bondCltvDelta, hold ?? 144)) {
+        throw new Error(
+          i18n(
+            'Bonds need Bond CLTV Delta above Hold Invoice CLTV Delta + 144 and at most 864. Lower Hold Invoice CLTV Delta below 720, or set a valid Bond CLTV Delta.',
+          ),
+        )
+      }
+    }
     await daemon_settings.merge(effects, {
       anti_abuse_bond: {
-        enabled: input.enabled === 'true',
+        enabled,
         amount_pct: input.amount_pct,
         base_amount_sats: input.base_amount_sats,
         apply_to: input.apply_to,
@@ -172,6 +200,7 @@ export const antiAbuseBondSettings = sdk.Action.withInput(
         payout_claim_window_days: input.payout_claim_window_days,
         maker_bond_payment_timeout_seconds:
           input.maker_bond_payment_timeout_seconds,
+        bond_cltv_delta: bondCltvDelta,
       },
     })
   },

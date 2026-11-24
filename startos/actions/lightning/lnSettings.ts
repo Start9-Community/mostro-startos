@@ -1,4 +1,4 @@
-import { daemon_settings } from '../../fileModels/settings'
+import { daemon_settings, isBondCltvValid } from '../../fileModels/settings'
 import { i18n } from '../../i18n'
 import { sdk } from '../../sdk'
 import { lndCredPaths } from '../../utils'
@@ -160,6 +160,17 @@ export const lnSettings = sdk.Action.withInput(
     if (input.escrow_deadline_margin_blocks >= input.hold_invoice_cltv_delta) {
       throw new Error(
         i18n('Escrow Deadline Margin must be below Hold Invoice CLTV Delta'),
+      )
+    }
+    const bond = await daemon_settings.read((s) => s?.anti_abuse_bond).once()
+    if (
+      bond?.enabled &&
+      !isBondCltvValid(bond.bond_cltv_delta, input.hold_invoice_cltv_delta)
+    ) {
+      throw new Error(
+        i18n(
+          'Bonds need Bond CLTV Delta above Hold Invoice CLTV Delta + 144 and at most 864. Lower Hold Invoice CLTV Delta below 720, or set a valid Bond CLTV Delta.',
+        ),
       )
     }
     await daemon_settings.merge(effects, {
