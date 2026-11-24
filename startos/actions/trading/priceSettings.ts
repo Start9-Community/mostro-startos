@@ -63,7 +63,7 @@ export const inputSpec = InputSpec.of({
     default: 5,
     required: true,
     integer: false,
-    min: 0,
+    min: 0.1,
     max: 50,
   }),
   pair_divergence_pct: Value.number({
@@ -372,7 +372,9 @@ export const priceSettings = sdk.Action.withInput(
       publish_to_nostr: asEnabled(price?.publish_to_nostr, true),
       yadio_enabled: asEnabled(providers?.yadio?.enabled, true),
       yadio_url: providers?.yadio?.url ?? 'https://api.yadio.io',
-      yadio_except: providers?.yadio?.except ?? DEFAULT_YADIO_EXCEPT,
+      yadio_except: providers?.yadio
+        ? (providers.yadio.except ?? [])
+        : DEFAULT_YADIO_EXCEPT,
       coingecko_enabled: asEnabled(providers?.coingecko?.enabled, true),
       coingecko_url:
         providers?.coingecko?.url ?? 'https://api.coingecko.com/api/v3',
@@ -382,8 +384,9 @@ export const priceSettings = sdk.Action.withInput(
         providers?.currency_api?.url ?? 'https://currency-api.pages.dev/v1',
       currency_api_fallback_urls:
         providers?.currency_api?.fallback_urls ?? DEFAULT_CURRENCY_API_FALLBACK,
-      currency_api_except:
-        providers?.currency_api?.except ?? DEFAULT_CURRENCY_API_EXCEPT,
+      currency_api_except: providers?.currency_api
+        ? (providers.currency_api.except ?? [])
+        : DEFAULT_CURRENCY_API_EXCEPT,
       blockchain_enabled: asEnabled(providers?.blockchain?.enabled, true),
       blockchain_url: providers?.blockchain?.url ?? 'https://blockchain.info',
       eltoque_enabled: asEnabled(providers?.eltoque?.enabled, false),
@@ -433,6 +436,25 @@ export const priceSettings = sdk.Action.withInput(
       throw new Error(i18n('Must be an http:// or https:// URL'))
     }
 
+    const scopes = await daemon_settings
+      .read((s) => ({
+        yadioOnly: s?.price.providers.yadio.only,
+        currencyApiOnly: s?.price.providers.currency_api.only,
+      }))
+      .once()
+    const yadioExcept = parseCodeList(input.yadio_except)
+    const currencyApiExcept = parseCodeList(input.currency_api_except)
+    if (
+      (scopes?.yadioOnly !== undefined && yadioExcept.length > 0) ||
+      (scopes?.currencyApiOnly !== undefined && currencyApiExcept.length > 0)
+    ) {
+      throw new Error(
+        i18n(
+          'A provider with a custom only list cannot also have exclusions. Leave its exclusions empty to preserve the only list.',
+        ),
+      )
+    }
+
     await daemon_settings.merge(effects, {
       price: {
         update_interval_seconds: input.update_interval_seconds,
@@ -448,7 +470,7 @@ export const priceSettings = sdk.Action.withInput(
           yadio: {
             enabled: input.yadio_enabled === 'true',
             url: input.yadio_url.trim(),
-            except: parseCodeList(input.yadio_except),
+            except: scopes?.yadioOnly === undefined ? yadioExcept : undefined,
           },
           coingecko: {
             enabled: input.coingecko_enabled === 'true',
@@ -461,7 +483,10 @@ export const priceSettings = sdk.Action.withInput(
             fallback_urls: input.currency_api_fallback_urls
               .map((u) => u.trim())
               .filter((u) => u.length > 0),
-            except: parseCodeList(input.currency_api_except),
+            except:
+              scopes?.currencyApiOnly === undefined
+                ? currencyApiExcept
+                : undefined,
           },
           blockchain: {
             enabled: input.blockchain_enabled === 'true',

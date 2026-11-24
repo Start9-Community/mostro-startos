@@ -154,11 +154,27 @@ const rpcSchema = z.looseObject({
   rate_limiter_stale_duration: natural(3600),
 })
 
-const priceProviderYadioSchema = z.looseObject({
-  enabled: z.boolean().catch(true),
-  url: z.string().catch('https://api.yadio.io'),
-  except: z.array(z.string()).catch([...DEFAULT_YADIO_EXCEPT]),
-})
+// Mostro rejects providers containing both `only` and `except`.
+function providerExclusions(
+  provider: { only?: unknown; except?: string[] },
+  defaults: string[],
+): string[] | undefined {
+  return (
+    provider.except ?? (provider.only === undefined ? [...defaults] : undefined)
+  )
+}
+
+const priceProviderYadioSchema = z
+  .looseObject({
+    enabled: z.boolean().catch(true),
+    url: z.string().catch('https://api.yadio.io'),
+    only: z.array(z.string()).optional().catch(undefined),
+    except: z.array(z.string()).optional().catch(undefined),
+  })
+  .transform((provider) => ({
+    ...provider,
+    except: providerExclusions(provider, DEFAULT_YADIO_EXCEPT),
+  }))
 
 const priceProviderCoingeckoSchema = z.looseObject({
   enabled: z.boolean().catch(true),
@@ -166,16 +182,22 @@ const priceProviderCoingeckoSchema = z.looseObject({
   api_key: z.string().catch(''),
 })
 
-const priceProviderCurrencyApiSchema = z.looseObject({
-  enabled: z.boolean().catch(true),
-  url: z.string().catch('https://currency-api.pages.dev/v1'),
-  fallback_urls: z
-    .array(z.string())
-    .catch([
-      'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1',
-    ]),
-  except: z.array(z.string()).catch([...DEFAULT_CURRENCY_API_EXCEPT]),
-})
+const priceProviderCurrencyApiSchema = z
+  .looseObject({
+    enabled: z.boolean().catch(true),
+    url: z.string().catch('https://currency-api.pages.dev/v1'),
+    fallback_urls: z
+      .array(z.string())
+      .catch([
+        'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1',
+      ]),
+    only: z.array(z.string()).optional().catch(undefined),
+    except: z.array(z.string()).optional().catch(undefined),
+  })
+  .transform((provider) => ({
+    ...provider,
+    except: providerExclusions(provider, DEFAULT_CURRENCY_API_EXCEPT),
+  }))
 
 const priceProviderBlockchainSchema = z.looseObject({
   enabled: z.boolean().catch(true),
@@ -225,12 +247,14 @@ const priceProvidersSchema = z.looseObject({
   ),
 })
 
+const priceThresholdSchema = z.number().gt(0).max(100)
+
 const priceSchema = z.looseObject({
   update_interval_seconds: natural(300),
   max_price_staleness_seconds: natural(1800),
-  outlier_threshold_pct: z.number().catch(5.0),
+  outlier_threshold_pct: priceThresholdSchema.catch(5.0),
   // Tolerance for exactly two sources; unset follows outlier_threshold_pct.
-  pair_divergence_pct: z.number().gt(0).max(100).optional().catch(undefined),
+  pair_divergence_pct: priceThresholdSchema.optional().catch(undefined),
   provider_timeout_seconds: natural(10),
   provider_failure_threshold: natural(3),
   provider_failure_cooldown_seconds: natural(120),

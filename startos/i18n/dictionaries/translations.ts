@@ -197,6 +197,7 @@ export default {
     228: '- Habilitado: acepta órdenes en stablecoins (con precio a partir de la tasa del USD, importe en monedas enteras) y en bitcoin de otras redes (importe en sats), cotizadas 1:1 sin consultar la red. Si Monedas fiat aceptadas en los ajustes de Mostro no está vacío, añade allí también cada código que cotices\n- Deshabilitado: las órdenes a precio de mercado en estos códigos se rechazan',
     229: 'Códigos anclados',
     230: 'Códigos anclados que este nodo cotiza cuando está habilitado',
+    231: 'Un proveedor con una lista only personalizada no puede tener también exclusiones. Deja sus exclusiones vacías para conservar la lista only.',
   },
   de_DE: {
     0: 'Starte Mostro!',
@@ -394,6 +395,7 @@ export default {
     228: '- Aktiviert: Orders in Stablecoins (bepreist über den USD-Kurs, Betrag in ganzen Coins) und Bitcoin in anderen Netzwerken (Betrag in Sats) annehmen, 1:1 ohne Netzwerkabfrage notiert. Ist Akzeptierte Fiat-Währungen in den Mostro-Einstellungen nicht leer, dort auch jeden notierten Code eintragen\n- Deaktiviert: Orders zum Marktpreis in diesen Codes werden abgelehnt',
     229: 'Gekoppelte Codes',
     230: 'Gekoppelte Codes, die dieser Knoten notiert, wenn aktiviert',
+    231: 'Ein Anbieter mit einer eigenen only-Liste kann nicht zugleich Ausschlüsse haben. Die Ausschlüsse leer lassen, um die only-Liste beizubehalten.',
   },
   pl_PL: {
     0: 'Uruchamianie Mostro!',
@@ -591,6 +593,7 @@ export default {
     228: '- Włączony: przyjmuj zlecenia w stablecoinach (wyceniane według kursu USD, kwota w całych monetach) i w bitcoinie w innych sieciach (kwota w satach), notowane 1:1 bez zapytań sieciowych. Jeśli Akceptowane waluty fiat w ustawieniach Mostro nie są puste, dodaj tam też każdy notowany kod\n- Wyłączony: zlecenia po cenie rynkowej w tych kodach są odrzucane',
     229: 'Kody powiązane',
     230: 'Kody powiązane notowane przez ten węzeł, gdy włączone',
+    231: 'Dostawca z własną listą only nie może mieć jednocześnie wykluczeń. Pozostaw wykluczenia puste, aby zachować listę only.',
   },
   fr_FR: {
     0: 'Démarrage de Mostro !',
@@ -788,5 +791,6 @@ export default {
     228: '- Activé : accepter des ordres en stablecoins (valorisés au cours de l’USD, montant en unités entières) et en bitcoin sur d’autres réseaux (montant en sats), cotés 1:1 sans appel réseau. Si Devises fiat acceptées dans les paramètres de Mostro n’est pas vide, ajoutez-y aussi chaque code coté\n- Désactivé : les ordres au prix du marché dans ces codes sont refusés',
     229: 'Codes indexés',
     230: 'Codes indexés que ce nœud cote lorsqu’activé',
+    231: 'Un fournisseur avec une liste only personnalisée ne peut pas avoir aussi des exclusions. Laissez ses exclusions vides pour conserver la liste only.',
   },
 } satisfies Record<string, LangDict>

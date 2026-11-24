@@ -180,6 +180,8 @@ Poll cadence, outlier, two-source divergence and circuit-breaker limits, whether
 
 - **The `[price]` block is always present.** The package writes it from defaults on every start, so the legacy single-source synthesis never runs; this form only changes its values.
 - **A currency with exactly two sources that disagree is refused** by Mostro (since 0.20.3) until they agree within `pair_divergence_pct` (unset: `outlier_threshold_pct`). Yadio and currency-api ship with upstream's `except` lists of codes they misquote, so minor fiats keep enough agreeing sources. The 0.20.3 upgrade replaces a currency-api list still at the old `CUP`, `MLC` default.
+- **Custom provider scopes are preserved.** Yadio and currency-api receive default exclusions only when neither `only` nor `except` is configured. A custom `only` list leaves that provider's exclusions empty in the form; keep them empty to preserve it, or remove `only` from `settings.toml` before configuring exclusions.
+- **Price thresholds must be positive.** The form rejects a zero Outlier Threshold, and an invalid saved value is repaired to the upstream default of 5%.
 - **Pegged currencies stay off.** When on, the stablecoins (USDT, USDC, DOC → USD) and bitcoin on other networks (BTC, LBTC, RBTC → sats) selected are quoted 1:1 with no network call; selecting all of them omits `only`.
 - **El Toque stays off** until you have a token and have confirmed the API; enabling it without a token is rejected.
 - **Nostr prices stay off** until at least one trusted 64-character hex pubkey is listed.

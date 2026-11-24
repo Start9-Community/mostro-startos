@@ -79,7 +79,7 @@ export const inputSpec = InputSpec.of({
     required: true,
     integer: true,
     min: 18,
-    max: 2016,
+    max: 999,
   }),
   max_inflight_payouts: Value.number({
     name: i18n('Max In-Flight Payouts'),

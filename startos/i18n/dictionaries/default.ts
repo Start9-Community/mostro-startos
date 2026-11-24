@@ -196,6 +196,7 @@ const dict = {
   '- Enabled: accept orders in stablecoins (priced from the USD rate, amount in whole coins) and bitcoin on other networks (amount in sats), quoted 1:1 with no network call. If Fiat Currencies Accepted in Mostro Settings is not empty, add every code you quote there too\n- Disabled: market-priced orders in these codes are refused': 228,
   'Pegged Codes': 229,
   'Pegged codes this node quotes when enabled': 230,
+  'A provider with a custom only list cannot also have exclusions. Leave its exclusions empty to preserve the only list.': 231,
 } as const
 
 /**

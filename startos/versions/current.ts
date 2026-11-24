@@ -6,8 +6,10 @@ import {
   LEGACY_CURRENCY_API_EXCEPT,
 } from '../fileModels/settings'
 
-const sameCodes = (a: string[], b: string[]) =>
-  a.length === b.length && a.every((code) => b.includes(code))
+const hasLegacyCurrencyApiExclusions = (codes: string[] | undefined) =>
+  codes !== undefined &&
+  codes.length === LEGACY_CURRENCY_API_EXCEPT.length &&
+  LEGACY_CURRENCY_API_EXCEPT.every((code) => codes.includes(code))
 
 export const current = VersionInfo.of({
   version: '0.20.3:0',
@@ -118,10 +120,7 @@ Notes complètes : https://github.com/MostroP2P/mostro/releases/tag/v0.20.3`,
               ...settings.price.providers,
               currency_api: {
                 ...currencyApi,
-                except: sameCodes(
-                  currencyApi.except,
-                  LEGACY_CURRENCY_API_EXCEPT,
-                )
+                except: hasLegacyCurrencyApiExclusions(currencyApi.except)
                   ? [...DEFAULT_CURRENCY_API_EXCEPT]
                   : currencyApi.except,
               },
