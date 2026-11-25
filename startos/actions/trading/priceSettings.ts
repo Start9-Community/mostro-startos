@@ -1,6 +1,7 @@
 import {
   daemon_settings,
   DEFAULT_CURRENCY_API_EXCEPT,
+  DEFAULT_ELTOQUE_ONLY,
   DEFAULT_YADIO_EXCEPT,
   PEGGED_CODES,
   PeggedCode,
@@ -282,7 +283,7 @@ export const inputSpec = InputSpec.of({
         description: i18n(
           'Fiat codes this source may contribute (CUP and MLC)',
         ),
-        default: ['CUP', 'MLC'],
+        default: DEFAULT_ELTOQUE_ONLY,
         minLength: 0,
       },
       {
@@ -338,7 +339,7 @@ export const inputSpec = InputSpec.of({
     description: i18n('Pegged codes this node quotes when enabled'),
     default: [...PEGGED_CODES],
     values: PEGGED_LABELS,
-    minLength: 1,
+    minLength: 0,
   }),
 })
 
@@ -392,11 +393,17 @@ export const priceSettings = sdk.Action.withInput(
       eltoque_enabled: asEnabled(providers?.eltoque?.enabled, false),
       eltoque_url: providers?.eltoque?.url ?? 'https://tasas.eltoque.com',
       eltoque_token: providers?.eltoque?.token ?? '',
-      eltoque_only: providers?.eltoque?.only ?? ['CUP', 'MLC'],
+      eltoque_only: providers?.eltoque
+        ? (providers.eltoque.only ?? [])
+        : DEFAULT_ELTOQUE_ONLY,
       nostr_enabled: asEnabled(providers?.nostr?.enabled, false),
       nostr_trusted_nodes: providers?.nostr?.trusted_nodes ?? [],
       pegged_enabled: asEnabled(providers?.pegged?.enabled, false),
-      pegged_codes: providers?.pegged?.only ?? [...PEGGED_CODES],
+      pegged_codes: PEGGED_CODES.filter((code) =>
+        providers?.pegged?.only !== undefined
+          ? providers.pegged.only.includes(code)
+          : !providers?.pegged?.except?.includes(code),
+      ),
     }
   },
 
@@ -440,6 +447,7 @@ export const priceSettings = sdk.Action.withInput(
       .read((s) => ({
         yadioOnly: s?.price.providers.yadio.only,
         currencyApiOnly: s?.price.providers.currency_api.only,
+        eltoqueExcept: s?.price.providers.eltoque.except,
       }))
       .once()
     const yadioExcept = parseCodeList(input.yadio_except)
@@ -454,6 +462,11 @@ export const priceSettings = sdk.Action.withInput(
         ),
       )
     }
+
+    // A saved `except` stays until the operator lists currencies to allow.
+    const eltoqueOnly = parseCodeList(input.eltoque_only)
+    const keepEltoqueExcept =
+      scopes?.eltoqueExcept !== undefined && eltoqueOnly.length === 0
 
     await daemon_settings.merge(effects, {
       price: {
@@ -496,7 +509,8 @@ export const priceSettings = sdk.Action.withInput(
             enabled: eltoqueEnabled,
             url: input.eltoque_url.trim(),
             token: input.eltoque_token?.trim() ?? '',
-            only: parseCodeList(input.eltoque_only),
+            only: keepEltoqueExcept ? undefined : eltoqueOnly,
+            except: keepEltoqueExcept ? scopes?.eltoqueExcept : undefined,
           },
           nostr: {
             enabled: nostrEnabled,
@@ -504,11 +518,13 @@ export const priceSettings = sdk.Action.withInput(
           },
           pegged: {
             enabled: input.pegged_enabled === 'true',
-            // Omitting `only` quotes every pegged code.
-            only:
-              input.pegged_codes.length === PEGGED_CODES.length
-                ? undefined
-                : input.pegged_codes,
+            // Form saves preserve the quoted set and write one scope key.
+            only: PEGGED_CODES.every((code) =>
+              input.pegged_codes.includes(code),
+            )
+              ? undefined
+              : input.pegged_codes,
+            except: undefined,
           },
         },
       },

@@ -35,6 +35,8 @@ export const DEFAULT_CURRENCY_API_EXCEPT = [
   'YER',
 ]
 
+export const DEFAULT_ELTOQUE_ONLY = ['CUP', 'MLC']
+
 export const PEGGED_CODES = [
   'USDT',
   'USDC',
@@ -156,7 +158,7 @@ const rpcSchema = z.looseObject({
 
 // Mostro rejects providers containing both `only` and `except`.
 function providerExclusions(
-  provider: { only?: unknown; except?: string[] },
+  provider: { only?: string[]; except?: string[] },
   defaults: string[],
 ): string[] | undefined {
   return (
@@ -204,23 +206,43 @@ const priceProviderBlockchainSchema = z.looseObject({
   url: z.string().catch('https://blockchain.info'),
 })
 
-const priceProviderEltoqueSchema = z.looseObject({
-  enabled: z.boolean().catch(false),
-  url: z.string().catch('https://tasas.eltoque.com'),
-  token: z.string().catch(''),
-  only: z.array(z.string()).catch(['CUP', 'MLC']),
-})
+const priceProviderEltoqueSchema = z
+  .looseObject({
+    enabled: z.boolean().catch(false),
+    url: z.string().catch('https://tasas.eltoque.com'),
+    token: z.string().catch(''),
+    only: z.array(z.string()).optional().catch(undefined),
+    except: z.array(z.string()).optional().catch(undefined),
+  })
+  .transform((provider) => ({
+    ...provider,
+    only:
+      provider.only ??
+      (provider.except === undefined ? [...DEFAULT_ELTOQUE_ONLY] : undefined),
+  }))
 
 const priceProviderNostrSchema = z.looseObject({
   enabled: z.boolean().catch(false),
   trusted_nodes: z.array(z.string()).catch([]),
 })
 
+// Case-insensitive, matching Mostro. Unknown codes, which Mostro refuses, are
+// dropped one by one so that a typo cannot lift the whole restriction.
+const peggedScopeSchema = z
+  .array(z.string())
+  .transform((codes) => {
+    const upper = codes.map((code) => code.trim().toUpperCase())
+    return PEGGED_CODES.filter((code) => upper.includes(code))
+  })
+  .optional()
+  .catch(undefined)
+
 // Stablecoins and bitcoin on other networks, quoted 1:1 with no network call.
-// Absent `only` quotes every pegged code; upstream rejects unknown codes.
+// Absent scopes quote every pegged code; upstream rejects unknown codes.
 const priceProviderPeggedSchema = z.looseObject({
   enabled: z.boolean().catch(false),
-  only: z.array(z.enum(PEGGED_CODES)).optional().catch(undefined),
+  only: peggedScopeSchema,
+  except: peggedScopeSchema,
 })
 
 const priceProvidersSchema = z.looseObject({
@@ -250,8 +272,9 @@ const priceProvidersSchema = z.looseObject({
 const priceThresholdSchema = z.number().gt(0).max(100)
 
 const priceSchema = z.looseObject({
-  update_interval_seconds: natural(300),
-  max_price_staleness_seconds: natural(1800),
+  // Mostro refuses to start with 0 in either.
+  update_interval_seconds: z.number().int().positive().catch(300),
+  max_price_staleness_seconds: z.number().int().positive().catch(1800),
   outlier_threshold_pct: priceThresholdSchema.catch(5.0),
   // Tolerance for exactly two sources; unset follows outlier_threshold_pct.
   pair_divergence_pct: priceThresholdSchema.optional().catch(undefined),
