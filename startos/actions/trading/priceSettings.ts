@@ -1,4 +1,11 @@
-import { daemon_settings } from '../../fileModels/settings'
+import {
+  daemon_settings,
+  DEFAULT_CURRENCY_API_EXCEPT,
+  DEFAULT_ELTOQUE_ONLY,
+  DEFAULT_YADIO_EXCEPT,
+  PEGGED_CODES,
+  PeggedCode,
+} from '../../fileModels/settings'
 import { i18n } from '../../i18n'
 import { sdk } from '../../sdk'
 
@@ -7,6 +14,15 @@ const { InputSpec, Value, List } = sdk
 const DEFAULT_CURRENCY_API_FALLBACK = [
   'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1',
 ]
+
+const PEGGED_LABELS: Record<PeggedCode, string> = {
+  USDT: 'USDT → USD',
+  USDC: 'USDC → USD',
+  DOC: 'DOC → USD',
+  BTC: 'BTC (on-chain) → sats',
+  LBTC: 'LBTC (Liquid) → sats',
+  RBTC: 'RBTC (Rootstock) → sats',
+}
 
 const HEX_PUBKEY = /^[0-9a-fA-F]{64}$/
 const HTTP_URL = /^https?:\/\/\S+$/
@@ -48,8 +64,19 @@ export const inputSpec = InputSpec.of({
     default: 5,
     required: true,
     integer: false,
-    min: 0,
+    min: 0.1,
     max: 50,
+  }),
+  pair_divergence_pct: Value.number({
+    name: i18n('Two-Source Divergence Limit'),
+    description: i18n(
+      'For a currency with exactly two sources: if they differ by more than this percent of their mean, the currency is refused until they agree again. Leave empty to use Outlier Threshold.',
+    ),
+    default: null,
+    required: false,
+    integer: false,
+    min: 0.1,
+    max: 100,
   }),
   provider_timeout_seconds: Value.number({
     name: i18n('Provider Timeout'),
@@ -111,6 +138,19 @@ export const inputSpec = InputSpec.of({
     default: 'https://api.yadio.io',
     required: true,
   }),
+  yadio_except: Value.list(
+    List.text(
+      {
+        name: i18n('Yadio Except'),
+        description: i18n('Fiat codes this source must not contribute'),
+        default: DEFAULT_YADIO_EXCEPT,
+        minLength: 0,
+      },
+      {
+        placeholder: 'JMD',
+      },
+    ),
+  ),
   coingecko_enabled: Value.select({
     name: i18n('CoinGecko Enabled'),
     description: i18n(
@@ -144,7 +184,7 @@ export const inputSpec = InputSpec.of({
   currency_api_enabled: Value.select({
     name: i18n('Currency API Enabled'),
     description: i18n(
-      '- Enabled: the keyless currency-api CDN is one of the price sources (300+ currencies at official rates; CUP and MLC are excluded by default)\n- Disabled: not queried',
+      '- Enabled: the keyless currency-api CDN is one of the price sources (300+ currencies at official rates; codes with a parallel market, such as CUP and VES, are excluded by default)\n- Disabled: not queried',
     ),
     default: 'true',
     values: {
@@ -184,7 +224,7 @@ export const inputSpec = InputSpec.of({
       {
         name: i18n('Currency API Except'),
         description: i18n('Fiat codes this source must not contribute'),
-        default: ['CUP', 'MLC'],
+        default: DEFAULT_CURRENCY_API_EXCEPT,
         minLength: 0,
       },
       {
@@ -243,7 +283,7 @@ export const inputSpec = InputSpec.of({
         description: i18n(
           'Fiat codes this source may contribute (CUP and MLC)',
         ),
-        default: ['CUP', 'MLC'],
+        default: DEFAULT_ELTOQUE_ONLY,
         minLength: 0,
       },
       {
@@ -283,6 +323,24 @@ export const inputSpec = InputSpec.of({
       },
     ),
   ),
+  pegged_enabled: Value.select({
+    name: i18n('Pegged Currencies Enabled'),
+    description: i18n(
+      '- Enabled: accept orders in stablecoins (priced from the USD rate, amount in whole coins) and bitcoin on other networks (amount in sats), quoted 1:1 with no network call. If Fiat Currencies Accepted in Mostro Settings is not empty, add every code you quote there too\n- Disabled: market-priced orders in these codes are refused',
+    ),
+    default: 'false',
+    values: {
+      true: i18n('Enabled'),
+      false: i18n('Disabled'),
+    },
+  }),
+  pegged_codes: Value.multiselect({
+    name: i18n('Pegged Codes'),
+    description: i18n('Pegged codes this node quotes when enabled'),
+    default: [...PEGGED_CODES],
+    values: PEGGED_LABELS,
+    minLength: 0,
+  }),
 })
 
 export const priceSettings = sdk.Action.withInput(
@@ -307,6 +365,7 @@ export const priceSettings = sdk.Action.withInput(
       update_interval_seconds: price?.update_interval_seconds ?? 300,
       max_price_staleness_seconds: price?.max_price_staleness_seconds ?? 1800,
       outlier_threshold_pct: price?.outlier_threshold_pct ?? 5,
+      pair_divergence_pct: price?.pair_divergence_pct ?? null,
       provider_timeout_seconds: price?.provider_timeout_seconds ?? 10,
       provider_failure_threshold: price?.provider_failure_threshold ?? 3,
       provider_failure_cooldown_seconds:
@@ -314,6 +373,9 @@ export const priceSettings = sdk.Action.withInput(
       publish_to_nostr: asEnabled(price?.publish_to_nostr, true),
       yadio_enabled: asEnabled(providers?.yadio?.enabled, true),
       yadio_url: providers?.yadio?.url ?? 'https://api.yadio.io',
+      yadio_except: providers?.yadio
+        ? (providers.yadio.except ?? [])
+        : DEFAULT_YADIO_EXCEPT,
       coingecko_enabled: asEnabled(providers?.coingecko?.enabled, true),
       coingecko_url:
         providers?.coingecko?.url ?? 'https://api.coingecko.com/api/v3',
@@ -323,15 +385,25 @@ export const priceSettings = sdk.Action.withInput(
         providers?.currency_api?.url ?? 'https://currency-api.pages.dev/v1',
       currency_api_fallback_urls:
         providers?.currency_api?.fallback_urls ?? DEFAULT_CURRENCY_API_FALLBACK,
-      currency_api_except: providers?.currency_api?.except ?? ['CUP', 'MLC'],
+      currency_api_except: providers?.currency_api
+        ? (providers.currency_api.except ?? [])
+        : DEFAULT_CURRENCY_API_EXCEPT,
       blockchain_enabled: asEnabled(providers?.blockchain?.enabled, true),
       blockchain_url: providers?.blockchain?.url ?? 'https://blockchain.info',
       eltoque_enabled: asEnabled(providers?.eltoque?.enabled, false),
       eltoque_url: providers?.eltoque?.url ?? 'https://tasas.eltoque.com',
       eltoque_token: providers?.eltoque?.token ?? '',
-      eltoque_only: providers?.eltoque?.only ?? ['CUP', 'MLC'],
+      eltoque_only: providers?.eltoque
+        ? (providers.eltoque.only ?? [])
+        : DEFAULT_ELTOQUE_ONLY,
       nostr_enabled: asEnabled(providers?.nostr?.enabled, false),
       nostr_trusted_nodes: providers?.nostr?.trusted_nodes ?? [],
+      pegged_enabled: asEnabled(providers?.pegged?.enabled, false),
+      pegged_codes: PEGGED_CODES.filter((code) =>
+        providers?.pegged?.only !== undefined
+          ? providers.pegged.only.includes(code)
+          : !providers?.pegged?.except?.includes(code),
+      ),
     }
   },
 
@@ -371,11 +443,37 @@ export const priceSettings = sdk.Action.withInput(
       throw new Error(i18n('Must be an http:// or https:// URL'))
     }
 
+    const scopes = await daemon_settings
+      .read((s) => ({
+        yadioOnly: s?.price.providers.yadio.only,
+        currencyApiOnly: s?.price.providers.currency_api.only,
+        eltoqueExcept: s?.price.providers.eltoque.except,
+      }))
+      .once()
+    const yadioExcept = parseCodeList(input.yadio_except)
+    const currencyApiExcept = parseCodeList(input.currency_api_except)
+    if (
+      (scopes?.yadioOnly !== undefined && yadioExcept.length > 0) ||
+      (scopes?.currencyApiOnly !== undefined && currencyApiExcept.length > 0)
+    ) {
+      throw new Error(
+        i18n(
+          'A provider with a custom only list cannot also have exclusions. Leave its exclusions empty to preserve the only list.',
+        ),
+      )
+    }
+
+    // A saved `except` stays until the operator lists currencies to allow.
+    const eltoqueOnly = parseCodeList(input.eltoque_only)
+    const keepEltoqueExcept =
+      scopes?.eltoqueExcept !== undefined && eltoqueOnly.length === 0
+
     await daemon_settings.merge(effects, {
       price: {
         update_interval_seconds: input.update_interval_seconds,
         max_price_staleness_seconds: input.max_price_staleness_seconds,
         outlier_threshold_pct: input.outlier_threshold_pct,
+        pair_divergence_pct: input.pair_divergence_pct ?? undefined,
         provider_timeout_seconds: input.provider_timeout_seconds,
         provider_failure_threshold: input.provider_failure_threshold,
         provider_failure_cooldown_seconds:
@@ -385,6 +483,7 @@ export const priceSettings = sdk.Action.withInput(
           yadio: {
             enabled: input.yadio_enabled === 'true',
             url: input.yadio_url.trim(),
+            except: scopes?.yadioOnly === undefined ? yadioExcept : undefined,
           },
           coingecko: {
             enabled: input.coingecko_enabled === 'true',
@@ -397,7 +496,10 @@ export const priceSettings = sdk.Action.withInput(
             fallback_urls: input.currency_api_fallback_urls
               .map((u) => u.trim())
               .filter((u) => u.length > 0),
-            except: parseCodeList(input.currency_api_except),
+            except:
+              scopes?.currencyApiOnly === undefined
+                ? currencyApiExcept
+                : undefined,
           },
           blockchain: {
             enabled: input.blockchain_enabled === 'true',
@@ -407,11 +509,22 @@ export const priceSettings = sdk.Action.withInput(
             enabled: eltoqueEnabled,
             url: input.eltoque_url.trim(),
             token: input.eltoque_token?.trim() ?? '',
-            only: parseCodeList(input.eltoque_only),
+            only: keepEltoqueExcept ? undefined : eltoqueOnly,
+            except: keepEltoqueExcept ? scopes?.eltoqueExcept : undefined,
           },
           nostr: {
             enabled: nostrEnabled,
             trusted_nodes: trustedNodes,
+          },
+          pegged: {
+            enabled: input.pegged_enabled === 'true',
+            // Form saves preserve the quoted set and write one scope key.
+            only: PEGGED_CODES.every((code) =>
+              input.pegged_codes.includes(code),
+            )
+              ? undefined
+              : input.pegged_codes,
+            except: undefined,
           },
         },
       },
